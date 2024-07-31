@@ -1,4 +1,4 @@
-# Editor's drafts for reschke-2837 branch of [httpwg/http-extensions](https://github.com/httpwg/http-extensions/tree/reschke-2837)
+# Editor's drafts for bemasc-capsule branch of [httpwg/http-extensions](https://github.com/httpwg/http-extensions/tree/bemasc-capsule)
 
 | Draft |     |     |     |
 | ----- | --- | --- | --- |

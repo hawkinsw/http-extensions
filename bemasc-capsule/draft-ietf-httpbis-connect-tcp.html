@@ -1411,8 +1411,8 @@ HEADERS
 <a href="#section-3.3.3" class="section-number selfRef">3.3.3. </a><a href="#name-use-of-the-capsule-protocol" class="section-name selfRef">Use of the Capsule Protocol</a>
           </h4>
 <p id="section-3.3.3-1">In this specification, use of the Capsule Protocol <span>[<a href="#RFC9297" class="cite xref">RFC9297</a>]</span> is <span class="bcp14">OPTIONAL</span>.  Clients <span class="bcp14">MAY</span> request use of the Capsule Protocol by including a "Capsule-Protocol: ?1" header field in the request.<a href="#section-3.3.3-1" class="pilcrow">¶</a></p>
-<p id="section-3.3.3-2">Server support for the Capsule Protocol is also <span class="bcp14">OPTIONAL</span>.  If the request includes "Capsule-Protocol: ?1", and the server does not support the Capsule Protocol, the server <span class="bcp14">MUST</span> respond with a 4xx (Client Error) status and a "Capsule-Protocol: ?0" response header field, and subsequently discard any received data stream on this request stream.  Upon receiving such a response, the client <span class="bcp14">MUST</span> disable use of the Capsule Protocol with this URI Template for the remainder of the session and retry the request.<a href="#section-3.3.3-2" class="pilcrow">¶</a></p>
-<p id="section-3.3.3-3">When using the Capsule Protocol, TCP payload data is sent in the payload of a new Capsule Type named DATA (<a href="#data-capsule" class="auto internal xref">Section 8.3</a>).  The concatenation of ordered DATA capsule payloads has the same semantics as what would have been sent on the data stream, were the Capsule Protocol not in use.  It is applicable whenever use of the Capsule Protocol is optional.<a href="#section-3.3.3-3" class="pilcrow">¶</a></p>
+<p id="section-3.3.3-2">Server support for the Capsule Protocol is also <span class="bcp14">OPTIONAL</span>.  If the request includes "Capsule-Protocol: ?1", and the server does not support the Capsule Protocol, the server <span class="bcp14">MUST</span> respond with a 4xx (Client Error) status and a "Capsule-Protocol: ?0" response header field, and <span class="bcp14">MUST</span> discard any data received on this request stream.  Upon receiving such a response, the client <span class="bcp14">MUST</span> disable use of the Capsule Protocol with this URI Template for the remainder of the session and retry the request.<a href="#section-3.3.3-2" class="pilcrow">¶</a></p>
+<p id="section-3.3.3-3">When using the Capsule Protocol, TCP payload data is sent in the payload of a new Capsule Type named DATA (<a href="#data-capsule" class="auto internal xref">Section 8.3</a>).  The ordered concatenation of DATA capsule payloads has the same semantics as what would have been sent on the data stream if the Capsule Protocol were not in use.  It is applicable whenever use of the Capsule Protocol is optional.<a href="#section-3.3.3-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1556,6 +1556,7 @@ https://$PROXY_HOST:$PROXY_PORT/.well-known/masque
             <p id="section-8.1-2.3.1">Reference: (This document)<a href="#section-8.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
+<p id="section-8.1-3">For interoperability testing of this draft version, implementations <span class="bcp14">SHALL</span> use the value "connect-tcp-05".<a href="#section-8.1-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="iana-template">
@@ -1613,6 +1614,7 @@ https://$PROXY_HOST:$PROXY_PORT/.well-known/masque
             </tr>
           </tbody>
         </table>
+<p id="section-8.3-3">For this draft version of the protocol, the Capsule Type value <code>0xb739a6d0</code> shall be used provisionally for testing, under the name "DATA-05".<a href="#section-8.3-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>

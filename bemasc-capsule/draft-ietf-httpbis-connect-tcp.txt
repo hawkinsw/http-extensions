@@ -302,9 +302,9 @@ Table of Contents
    support the Capsule Protocol, the server MUST respond with a 4xx
    (Client Error) status and a "Capsule-Protocol: ?0" response header
    field, and MUST discard any data received on this request stream.
-   Upon receiving such a response, the client MUST disable use of the
-   Capsule Protocol with this URI Template for the remainder of the
-   session and retry the request.
+   Upon receiving such a response, the client MUST retry the request
+   without the Capsule Protocol and MAY disable use of the Capsule
+   Protocol with this URI Template for the remainder of the session.
 
    When using the Capsule Protocol, TCP payload data is sent in the
    payload of a new Capsule Type named DATA (Section 8.3).  The ordered

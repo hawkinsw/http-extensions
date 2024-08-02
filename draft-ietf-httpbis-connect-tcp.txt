@@ -4,8 +4,8 @@
 
 httpbis                                                   B. M. Schwartz
 Internet-Draft                                      Meta Platforms, Inc.
-Intended status: Standards Track                            30 July 2024
-Expires: 31 January 2025
+Intended status: Standards Track                           2 August 2024
+Expires: 3 February 2025
 
 
              Template-Driven HTTP CONNECT Proxying for TCP
@@ -35,7 +35,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 31 January 2025.
+   This Internet-Draft will expire on 3 February 2025.
 
 Copyright Notice
 
@@ -64,7 +64,7 @@ Table of Contents
      3.3.  Use of Relevant Headers
        3.3.1.  Origin-scoped Headers
        3.3.2.  Authentication Headers
-     3.4.  Relationship to the Capsule Protocol
+       3.3.3.  Use of the Capsule Protocol
    4.  Additional Connection Setup Behaviors
      4.1.  Latency optimizations
      4.2.  Conveying metadata
@@ -76,6 +76,7 @@ Table of Contents
    8.  IANA Considerations
      8.1.  New Upgrade Token
      8.2.  New MASQUE Default Template
+     8.3.  New Capsule Type
    9.  References
      9.1.  Normative References
      9.2.  Informative References
@@ -290,16 +291,27 @@ Table of Contents
    client to avoid waiting for a "401 (Unauthorized)" response before
    each new connection through the proxy.
 
-3.4.  Relationship to the Capsule Protocol
+3.3.3.  Use of the Capsule Protocol
 
-   Unlike the datagram-oriented templated HTTP proxying specifications
-   [CONNECT-UDP][CONNECT-IP], this specification does not make use of
-   the Capsule Protocol [RFC9297].  A future specification could define
-   a procedure for performing TCP proxying using the Capsule Protocol,
-   but no such procedure is defined here.
+   In this specification, use of the Capsule Protocol [RFC9297] is
+   OPTIONAL.  Clients MAY request use of the Capsule Protocol by
+   including a "Capsule-Protocol: ?1" header field in the request.
 
-   When implementing this specification, clients and servers MUST NOT
-   send a "Capsule-Protocol: ?1" header field.
+   Server support for the Capsule Protocol is also OPTIONAL.  If the
+   request includes "Capsule-Protocol: ?1", and the server does not
+   support the Capsule Protocol, the server MUST respond with a 4xx
+   (Client Error) status and a "Capsule-Protocol: ?0" response header
+   field, and MUST discard any data received on this request stream.
+   Upon receiving such a response, the client MUST retry the request
+   without the Capsule Protocol and MAY disable use of the Capsule
+   Protocol with this URI Template for the remainder of the session.
+
+   When using the Capsule Protocol, TCP payload data is sent in the
+   payload of a new Capsule Type named DATA (Section 8.3).  The ordered
+   concatenation of DATA capsule payloads has the same semantics as what
+   would have been sent on the data stream if the Capsule Protocol were
+   not in use.  It is applicable whenever use of the Capsule Protocol is
+   optional.
 
 4.  Additional Connection Setup Behaviors
 
@@ -448,6 +460,9 @@ Table of Contents
 
    *  Reference: (This document)
 
+   For interoperability testing of this draft version, implementations
+   SHALL use the value "connect-tcp-05".
+
 8.2.  New MASQUE Default Template
 
    IF APPROVED, IANA is requested to add the following entry to the
@@ -460,6 +475,27 @@ Table of Contents
              +--------------+--------------+-----------------+
 
                                   Table 1
+
+8.3.  New Capsule Type
+
+   IF APPROVED, IANA is requested to add the following entry to the
+   "HTTP Capsule Types" registry:
+
+    +=======+=========+===========+============+============+=========+
+    | Value | Capsule | Status    | Reference  | Change     | Contact |
+    |       | Type    |           |            | Controller |         |
+    +=======+=========+===========+============+============+=========+
+    | (TBD) | DATA    | permanent | (This      | IETF       | HTTPBIS |
+    |       |         |           | document), |            |         |
+    |       |         |           | Section    |            |         |
+    |       |         |           | 3.3.3      |            |         |
+    +-------+---------+-----------+------------+------------+---------+
+
+                                  Table 2
+
+   For this draft version of the protocol, the Capsule Type value
+   0xb739a6d0 shall be used provisionally for testing, under the name
+   "DATA-05".
 
 9.  References
 

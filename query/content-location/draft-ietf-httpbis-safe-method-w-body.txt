@@ -5,9 +5,9 @@
 HTTP                                                          J. Reschke
 Internet-Draft                                                greenbytes
 Intended status: Standards Track                             A. Malhotra
-Expires: 3 February 2025                                                
+Expires: 4 February 2025                                                
                                                               J.M. Snell
-                                                           2 August 2024
+                                                           3 August 2024
 
 
                          The HTTP QUERY Method
@@ -47,7 +47,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 3 February 2025.
+   This Internet-Draft will expire on 4 February 2025.
 
 Copyright Notice
 
@@ -174,11 +174,11 @@ Table of Contents
 
    A successful response to a QUERY request can include a Content-
    Location header field (see Section 8.7 of [HTTP]) containing an
-   identifier for a specific resource corresponding to the results of
-   the operation.  This represents a claim from the server that a client
-   can send a GET request for the indicated URI to retrieve the results
-   of the query operation just performed.  The indicated resource might
-   be temporary.
+   identifier for a resource corresponding to the results of the
+   operation.  This represents a claim from the server that a client can
+   send a GET request for the indicated URI to retrieve the results of
+   the query operation just performed.  The indicated resource might be
+   temporary.
 
    A server MAY create or locate a resource that identifies the query
    operation for future use.  If the server does so, the URI of the

@@ -187,8 +187,8 @@ Table of Contents
    client can send a GET request to the indicated URI to repeat the
    query operation just performed without resending the query
    parameters.  This resource might be temporary; if a future request
-   fails, the client SHOULD retry using the original QUERY resource and
-   the previously submitted parameters again.
+   fails, the client can retry using the original QUERY resource and the
+   previously submitted parameters again.
 
    The semantics of the QUERY method change to a "conditional QUERY" if
    the request message includes an If-Modified-Since, If-Unmodified-

@@ -74,7 +74,8 @@ Table of Contents
    3.  The "Accept-Query" Header Field
    4.  Examples
      4.1.  Simple QUERY with a Direct Response
-     4.2.  Simple QUERY with indirect response (303 See Other)
+     4.2.  Simple QUERY with a Direct Response and Location fields
+     4.3.  Simple QUERY with indirect response (303 See Other)
    5.  Security Considerations
    6.  IANA Considerations
    7.  Normative References
@@ -270,14 +271,56 @@ Table of Contents
 
    HTTP/1.1 200 OK
    Content-Type: text/csv
-   Content-Location: /contacts/query123
 
    surname, givenname, email
    Smith, John, john.smith@example.org
    Jones, Sally, sally.jones@example.com
    Dubois, Camille, camille.dubois@example.net
 
-4.2.  Simple QUERY with indirect response (303 See Other)
+4.2.  Simple QUERY with a Direct Response and Location fields
+
+   A simple query with a direct response:
+
+   QUERY /contacts HTTP/1.1
+   Host: example.org
+   Content-Type: example/query
+   Accept: text/csv
+
+   select surname, givenname, email limit 10
+
+   Response:
+
+   HTTP/1.1 200 OK
+   Content-Type: text/csv
+   Content-Location: /contacts/responses/42
+   Location: /contacts/queries/17
+
+   surname, givenname, email
+   Smith, John, john.smith@example.org
+   Jones, Sally, sally.jones@example.com
+   Dubois, Camille, camille.dubois@example.net
+
+   A subsequent GET request on /contacts/responses/42 would return the
+   same response, until the server decides to remove that resource.
+
+   A GET request on /contacts/queries/17 however would execute the same
+   query again, and return a fresh result for that query:
+
+   GET /contacts/queries/17 HTTP/1.1
+   Host: example.org
+   Accept: text/csv
+
+   Response:
+
+   HTTP/1.1 200 OK
+   Content-Type: text/csv
+   Content-Location: /contacts/responses/43
+
+   surname, givenname, email
+   Jones, Sally, sally.jones@example.com
+   Dubois, Camille, camille.dubois@example.net
+
+4.3.  Simple QUERY with indirect response (303 See Other)
 
    A simple query with an Indirect Response (303 See Other):
 

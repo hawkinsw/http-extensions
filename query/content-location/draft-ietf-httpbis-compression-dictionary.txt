@@ -3,9 +3,10 @@
 
 
 HTTP                                                      P. Meenan, Ed.
-Internet-Draft                                             Y. Weiss, Ed.
-Intended status: Standards Track                              Google LLC
-Expires: 4 February 2025                                   3 August 2024
+Internet-Draft                                                Google LLC
+Intended status: Standards Track                           Y. Weiss, Ed.
+Expires: 4 February 2025                                     Shopify Inc
+                                                           3 August 2024
 
 
                     Compression Dictionary Transport
@@ -82,24 +83,28 @@ Table of Contents
        2.2.2.  Dictionary URL matching
        2.2.3.  Multiple matching dictionaries
      2.3.  Dictionary-ID
-     2.4.  Content-Dictionary
-   3.  Negotiating the compression algorithm
-     3.1.  Accept-Encoding
-     3.2.  Content-Encoding
-   4.  IANA Considerations
-     4.1.  Content Encoding
-     4.2.  Header Field Registration
-   5.  Compatibility Considerations
-   6.  Security Considerations
-     6.1.  Changing content
-     6.2.  Reading content
-     6.3.  Security Mitigations
-       6.3.1.  Cross-origin protection
-       6.3.2.  Response readability
-   7.  Privacy Considerations
-   8.  References
-     8.1.  Normative References
-     8.2.  Informative References
+   3.  The 'compression-dictionary' Link Relation Type
+   4.  Dictionary-Compressed Brotli
+   5.  Dictionary-Compressed Zstandard
+   6.  Negotiating the content encoding
+     6.1.  Accept-Encoding
+     6.2.  Content-Encoding
+   7.  IANA Considerations
+     7.1.  Content Encoding
+     7.2.  Header Field Registration
+     7.3.  Link Relation Registration
+   8.  Compatibility Considerations
+   9.  Security Considerations
+     9.1.  Changing content
+     9.2.  Reading content
+     9.3.  Security Mitigations
+       9.3.1.  Cross-origin protection
+       9.3.2.  Response readability
+       9.3.3.  Server Responsibility
+   10. Privacy Considerations
+   11. References
+     11.1.  Normative References
+     11.2.  Informative References
    Authors' Addresses
 
 1.  Introduction
@@ -125,10 +130,6 @@ Table of Contents
    [STRUCTURED-FIELDS] to specify syntax and parsing: Dictionary,
    String, Inner List, Token, and Byte Sequence.
 
-   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
-   "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
-   document are to be interpreted as described in [RFC2119].
-
    This document uses the line folding strategies described in
    [FOLDING].
 
@@ -150,10 +151,10 @@ Table of Contents
 2.1.1.  match
 
    The "match" value of the Use-As-Dictionary header is a String value
-   that provides the URLPattern to use for request matching
-   (https://urlpattern.spec.whatwg.org/).
+   that provides the URL Pattern [URLPattern] to use for request
+   matching.
 
-   The URLPattern used for matching does not support using Regular
+   The URL Pattern used for matching does not support using Regular
    expressions.
 
    The following algorithm will return TRUE for a valid match pattern
@@ -163,12 +164,10 @@ Table of Contents
 
    2.  Let URL be the URL of the dictionary request.
 
-   3.  Let PATTERN be a URLPattern constructed by setting input=MATCH,
-       and baseURL=URL (https://urlpattern.spec.whatwg.org/).
+   3.  Let PATTERN be a URL Pattern [URLPattern] constructed by setting
+       input=MATCH, and baseURL=URL.
 
-   4.  If PATTERN has regexp groups then return FALSE
-       (https://urlpattern.spec.whatwg.org/#urlpattern-has-regexp-
-       groups).
+   4.  If PATTERN has regexp groups then return FALSE.
 
    5.  Return True.
 
@@ -178,9 +177,8 @@ Table of Contents
 2.1.2.  match-dest
 
    The "match-dest" value of the Use-As-Dictionary header is an Inner
-   List of String values that provides a list of request destinations
-   for the dictionary to match (https://fetch.spec.whatwg.org/#concept-
-   request-destination).
+   List of String values that provides a list of [FETCH] request
+   destinations for the dictionary to match.
 
    An empty list for "match-dest" MUST match all destinations.
 
@@ -234,7 +232,8 @@ Table of Contents
      match="/product/*", match-dest=("document")
 
    Would specify matching any document request for a URL with a path
-   prefix of /product/ on the same [Origin] as the original request.
+   prefix of /product/ on the same Origin (Section 4.3.1 of [HTTP]) as
+   the original request.
 
 2.1.5.2.  Versioned Directories
 
@@ -277,8 +276,8 @@ Table of Contents
    to match an outgoing request from a client to the available
    dictionaries.
 
-   Dictionaries MUST have been served from the same {Origin} as the
-   outgoing request to match.
+   Dictionaries MUST have been served from the same Origin
+   (Section 4.3.1 of [HTTP]) as the outgoing request to match.
 
    To see if an outbound request matches a given dictionary, the
    following algorithm will return TRUE for a successful match and FALSE
@@ -299,28 +298,31 @@ Table of Contents
 
    3.  Let URL represent the URL of the outbound request being checked.
 
-   4.  If the {Origin} of BASEURL and the {Origin} of URL are not the
-       same, return FALSE.
+   4.  If the Origin of BASEURL and the Origin of URL are not the same,
+       return FALSE.
 
    5.  Let MATCH be the value of "match" for the given dictionary.
 
-   6.  Let PATTERN be a URLPattern constructed by setting input=MATCH,
-       and baseURL=BASEURL (https://urlpattern.spec.whatwg.org/).
+   6.  Let PATTERN be a URL Pattern [URLPattern] constructed by setting
+       input=MATCH, and baseURL=BASEURL.
 
    7.  Return the result of running the "test" method of PATTERN with
-       input=URL (https://urlpattern.spec.whatwg.org/#ref-for-dom-
-       urlpattern-test)
+       input=URL.
 
 2.2.3.  Multiple matching dictionaries
 
    When there are multiple dictionaries that match a given request URL,
    the client MUST pick a single dictionary using the following rules:
+
    1.  For clients that support request destinations, a dictionary that
-   specifies and matches a "match-dest" takes precedence over a match
-   that does not use a destination. 1.  Given equivalent destination
-   precedence, the dictionary with the longest "match" takes precedence.
-   1.  Given equivalent destination and match length precedence, the
-   most recently fetched dictionary takes precedence.
+       specifies and matches a "match-dest" takes precedence over a
+       match that does not use a destination.
+
+   2.  Given equivalent destination precedence, the dictionary with the
+       longest "match" takes precedence.
+
+   3.  Given equivalent destination and match length precedence, the
+       most recently fetched dictionary takes precedence.
 
 2.3.  Dictionary-ID
 
@@ -338,63 +340,147 @@ Table of Contents
    Available-Dictionary: :pZGm1Av0IEBKARczz7exkNYsZb8LzaMrV7J32a2fFG4=:
    Dictionary-ID: "/v1/main.js 33a64df551425fcc55e4d42a148795d9f25f89d4"
 
-2.4.  Content-Dictionary
+3.  The 'compression-dictionary' Link Relation Type
 
-   When a HTTP server responds with a resource that is encoded with a
-   dictionary the server MUST send the hash of the dictionary that was
-   used in the "Content-Dictionary" response header.
+   This specification defines the 'compression-dictionary' link relation
+   type [WEB-LINKING] that provides a mechanism for a HTTP response to
+   provide a URL for a compression dictionary that is related to, but
+   not directly used by the current HTTP response.
 
-   The "Content-Dictionary" response header is a Structured Field
-   [STRUCTURED-FIELDS] Byte Sequence containing the [SHA-256] hash of
-   the contents of the dictionary that was used to encode the response.
+   The 'compression-dictionary' link relation type indicates that
+   fetching and caching the specified resource is likely to be
+   beneficial for future requests.  The response to some of those future
+   requests are likely to be able to use the indicated resource as a
+   compression dictionary.
 
-   If the HTTP response contains a "Content-Dictionary" response header
-   with the hash of a dictionary that the client does not have available
-   then the client cannot decode or use the HTTP response.
+   Clients can fetch the provided resource at a time that they determine
+   would be appropriate.
 
-   For example:
+   The response to the fetch for the compression dictionary needs to
+   include a "Use-As-Dictionary" and caching response headers for it to
+   be usable as a compression dictionary.  The link relation only
+   provides the mechanism for triggering the fetch of the dictionary.
 
-   Content-Dictionary: :pZGm1Av0IEBKARczz7exkNYsZb8LzaMrV7J32a2fFG4=:
+   The following example shows a link to a resource at
+   https://example.org/dict.dat that is expected to produce a
+   compression dictionary:
 
-3.  Negotiating the compression algorithm
+   Link: <https://example.org/dict.dat>; rel="compression-dictionary"
+
+4.  Dictionary-Compressed Brotli
+
+   The "dcb" content encoding identifies a resource that is a
+   "Dictionary-Compressed Brotli" stream.
+
+   A "Dictionary-Compressed Brotli" stream has a fixed header that is
+   followed by a Shared Brotli [SHARED-BROTLI] stream.  The header
+   consists of a fixed 4 byte sequence and a 32 byte hash of the
+   external dictionary that was used.  The Shared Brotli stream is
+   created using the referenced external dictionary and a compression
+   window that is at most 16 MB in size.
+
+   The dictionary used for the "dcb" content encoding is a "raw"
+   dictionary type as defined in Section 2.1.4 and is treated as a
+   prefix dictionary as defined in section 9.2 of the Shared Brotli
+   Compressed Data Format draft.  [SHARED-BROTLI]
+
+   The 36-byte fixed header is as follows:
+
+   Magic_Number:  4 fixed bytes: 0xff, 0x44, 0x43, 0x42.
+
+   SHA_256_Hash:  32 Bytes.  SHA-256 hash digest of the dictionary
+      [SHA-256].
+
+   Clients that announce support for dcb content encoding MUST be able
+   to decompress resources that were compressed with a window size of up
+   to 16 MB.
+
+   With Brotli compression, the full dictionary is available during
+   compression and decompression independent of the compression window,
+   allowing for delta-compression of resources larger than the
+   compression window.
+
+5.  Dictionary-Compressed Zstandard
+
+   The "dcz" content encoding identifies a resource that is a
+   "Dictionary-Compressed Zstandard" stream.
+
+   A "Dictionary-Compressed Zstandard" stream is a binary stream that
+   starts with a 40-byte fixed header and is followed by a Zstandard
+   [RFC8878] stream of the response that has been compressed with an
+   external dictionary.
+
+   The dictionary used for the "dcz" content encoding is a "raw"
+   dictionary type as defined in Section 2.1.4 and is treated as a raw
+   dictionary as per section 5 of RFC 8878.
+
+   The 40-byte header consists of a fixed 8-byte sequence followed by
+   the 32-byte SHA-256 hash of the external dictionary that was used to
+   compress the resource:
+
+   Magic_Number:  8 fixed bytes: 0x5e, 0x2a, 0x4d, 0x18, 0x20, 0x00,
+      0x00, 0x00.
+
+   SHA_256_Hash:  32 Bytes.  SHA-256 hash digest of the dictionary
+      [SHA-256].
+
+   The 40-byte header is a Zstandard skippable frame (little-endian
+   0x184D2A5E) with a 32-byte length (little-endian 0x00000020) that is
+   compatible with existing Zstandard decoders.
+
+   Clients that announce support for dcz content encoding MUST be able
+   to decompress resources that were compressed with a window size of at
+   least 8 MB or 1.25 times the size of the dictionary, which ever is
+   greater, up to a maximum of 128 MB.
+
+   The window size used will be encoded in the content (currently, this
+   can be expressed in powers of two only) and it MUST be lower than
+   this limit.  An implementation MAY treat a window size that exceeds
+   the limit as a decoding error.
+
+   With Zstandard compression, the full dictionary is available during
+   compression and decompression until the size of the input exceeds the
+   compression window.  Beyond that point the dictionary becomes
+   unavailable.  Using a compression window that is 1.25 times the size
+   of the dictionary allows for full delta compression of resources that
+   have grown by 25% between releases while still giving the client
+   control over the memory it will need to allocate for a given
+   response.
+
+6.  Negotiating the content encoding
 
    When a compression dictionary is available for use for a given
-   request, the algorithm to be used is negotiated through the regular
-   mechanism for negotiating content encoding in HTTP.
-
-   This document introduces two new content encoding algorithms:
-
-            +==================+=============================+
-            | Content-Encoding | Description                 |
-            +==================+=============================+
-            | br-d             | Brotli using an external    |
-            |                  | compression dictionary      |
-            +------------------+-----------------------------+
-            | zstd-d           | Zstandard using an external |
-            |                  | compression dictionary      |
-            +------------------+-----------------------------+
-
-                                 Table 1
+   request, the encoding to be used is negotiated through the regular
+   mechanism for negotiating content encoding in HTTP through the
+   "Accept-Encoding" request header and "Content-Encoding" response
+   header.
 
    The dictionary to use is negotiated separately and advertised in the
    "Available-Dictionary" request header.
 
-3.1.  Accept-Encoding
+6.1.  Accept-Encoding
 
-   The client adds the algorithms that it supports to the "Accept-
-   Encoding" request header. e.g.:
+   When a dictionary is available for use on a given request, and the
+   client chooses to make dictionary-based content-encoding available,
+   the client adds the dictionary-aware content encodings that it
+   supports to the "Accept-Encoding" request header. e.g.:
 
-   Accept-Encoding: gzip, deflate, br, zstd, br-d, zstd-d
+   Accept-Encoding: gzip, deflate, br, zstd, dcb, dcz
 
-3.2.  Content-Encoding
+   When a client does not have a stored dictionary that matches the
+   request, or chooses not to use one for the request, the client MUST
+   NOT send its dictionary-aware content-encodings in the "Accept-
+   Encoding" request header.
 
-   If a server supports one of the dictionary algorithms advertised by
+6.2.  Content-Encoding
+
+   If a server supports one of the dictionary encodings advertised by
    the client and chooses to compress the content of the response using
    the dictionary that the client has advertised then it sets the
    "Content-Encoding" response header to the appropriate value for the
    algorithm selected. e.g.:
 
-   Content-Encoding: br-d
+   Content-Encoding: dcb
 
    If the response is cacheable, it MUST include a "Vary" header to
    prevent caches serving dictionary-compressed resources to clients
@@ -403,27 +489,33 @@ Table of Contents
 
    Vary: accept-encoding, available-dictionary
 
-4.  IANA Considerations
+7.  IANA Considerations
 
-4.1.  Content Encoding
+7.1.  Content Encoding
 
-   IANA is asked to update the "HTTP Content Coding Registry" registry
-   ([HTTP]) according to the table below:
+   IANA is asked to enter the following into the "HTTP Content Coding
+   Registry" registry ([HTTP]):
 
-   +========+=============================================+===========+
-   | Name   | Description                                 | Reference |
-   +========+=============================================+===========+
-   | br-d   | A stream of bytes compressed using the      | [RFC7932] |
-   |        | Brotli protocol with an external dictionary |           |
-   +--------+---------------------------------------------+-----------+
-   | zstd-d | A stream of bytes compressed using the      | [RFC8878] |
-   |        | Zstandard protocol with an external         |           |
-   |        | dictionary                                  |           |
-   +--------+---------------------------------------------+-----------+
+   *  Name: dcb
 
-                                 Table 2
+   *  Description: "Dictionary-Compressed Brotli" data format.
 
-4.2.  Header Field Registration
+   *  Reference: This document
+
+   *  Notes: Section 4
+
+   IANA is asked to enter the following into the "HTTP Content Coding
+   Registry" registry ([HTTP]):
+
+   *  Name: dcz
+
+   *  Description: "Dictionary-Compressed Zstandard" data format.
+
+   *  Reference: This document
+
+   *  Notes: Section 5
+
+7.2.  Header Field Registration
 
    IANA is asked to update the "Hypertext Transfer Protocol (HTTP) Field
    Name Registry" registry ([HTTP]) according to the table below:
@@ -437,24 +529,34 @@ Table of Contents
     +----------------------+-----------+------------------------------+
     | Dictionary-ID        | permanent | Section 2.3 of this document |
     +----------------------+-----------+------------------------------+
-    | Content-Dictionary   | permanent | Section 2.4 of this document |
-    +----------------------+-----------+------------------------------+
 
-                                  Table 3
+                                  Table 1
 
-5.  Compatibility Considerations
+7.3.  Link Relation Registration
+
+   IANA is asked to update the "Link Relation Type Registry" registry
+   ([WEB-LINKING]):
+
+   *  Relation Name: compression-dictionary
+
+   *  Description: Refers to a compression dictionary used for content
+      encoding.
+
+   *  Reference: This document, Section 3
+
+8.  Compatibility Considerations
 
    To minimize the risk of middle-boxes incorrectly processing
    dictionary-compressed responses, compression dictionary transport
    MUST only be used in secure contexts (HTTPS).
 
-6.  Security Considerations
+9.  Security Considerations
 
-   The security considerations for Brotli [RFC7932] and Zstandard
-   [RFC8878] apply to the dictionary-based versions of the respective
-   algorithms.
+   The security considerations for Brotli [RFC7932], Shared Brotli
+   [SHARED-BROTLI] and Zstandard [RFC8878] apply to the dictionary-based
+   versions of the respective algorithms.
 
-6.1.  Changing content
+9.1.  Changing content
 
    The dictionary must be treated with the same security precautions as
    the content, because a change to the dictionary can result in a
@@ -471,13 +573,14 @@ Table of Contents
    algorithm and the server would just ignore any "Available-Dictionary"
    requests that do not use the updated hash.
 
-6.2.  Reading content
+9.2.  Reading content
 
-   The CRIME attack shows that it's a bad idea to compress data from
-   mixed (e.g. public and private) sources -- the data sources include
-   not only the compressed data but also the dictionaries.  For example,
-   if you compress secret cookies using a public-data-only dictionary,
-   you still leak information about the cookies.
+   The compression attacks in Section 2.6 of [RFC7457] show that it's a
+   bad idea to compress data from mixed (e.g. public and private)
+   sources -- the data sources include not only the compressed data but
+   also the dictionaries.  For example, if you compress secret cookies
+   using a public-data-only dictionary, you still leak information about
+   the cookies.
 
    Not only can the dictionary reveal information about the compressed
    data, but vice versa, data compressed with the dictionary can reveal
@@ -486,19 +589,19 @@ Table of Contents
    the adversary can control the dictionary, the adversary can learn
    information about the compressed data.
 
-6.3.  Security Mitigations
+9.3.  Security Mitigations
 
    If any of the mitigations do not pass, the client MUST drop the
    response and return an error.
 
-6.3.1.  Cross-origin protection
+9.3.1.  Cross-origin protection
 
    To make sure that a dictionary can only impact content from the same
-   origin where the dictionary was served, the URLPattern used for
-   matching a dictionary to requests is guaranteed to be for the same
-   origin that the dictionary is served from.
+   origin where the dictionary was served, the URL Pattern used for
+   matching a dictionary to requests (Section 2.1.1) is guaranteed to be
+   for the same origin that the dictionary is served from.
 
-6.3.2.  Response readability
+9.3.2.  Response readability
 
    For clients, like web browsers, that provide additional protection
    against the readability of the payload of a response and against user
@@ -512,118 +615,77 @@ Table of Contents
 
    In browser terms, that means that both are either same-origin to the
    context they are being fetched from or that the response is cross-
-   origin and passes the CORS check
-   (https://fetch.spec.whatwg.org/#cors-check).
+   origin and passes the CORS check as defined in [FETCH].
 
-6.3.2.1.  Same-Origin
+9.3.3.  Server Responsibility
 
-   On the client-side, same-origin determination is defined in the fetch
-   spec (https://html.spec.whatwg.org/multipage/browsers.html#origin).
+   As with any usage of compressed content in a secure context, a
+   potential timing attack exists if the attacker can control any part
+   of the dictionary, or if it can read the dictionary and control any
+   part of the content being compressed, while performing multiple
+   requests that vary the dictionary or injected content.  Under such an
+   attack, the changing size or processing time of the response reveals
+   information about the content, which might be sufficient to read the
+   supposedly secure response.
 
-   On the server-side, a request with a "Sec-Fetch-Site:" request header
-   with a value of "same-origin" is to be considered a same-origin
-   request.
+   In general, a server can mitigate such attacks by preventing
+   variations per request, as in preventing active use of multiple
+   dictionaries for the same content, disabling compression when any
+   portion of the content comes from uncontrolled sources, and securing
+   access and control over the dictionary content in the same way as the
+   response content.  In addition, the following requirements on a
+   server are intended to disable dictionary-aware compression when the
+   client provides CORS request header fields that indicate a cross-
+   origin request context.
 
-   *  For any request that is same-origin:
+   The following algorithm will return FALSE for cross-origin requests
+   where precautions such as not using dictionary-based compression
+   should be considered:
 
-      -  Response MAY be used as a dictionary.
+   1.  If there is no "Sec-Fetch-Site" request header then return TRUE.
 
-      -  Response MAY be compressed by an available dictionary.
+   2.  if the value of the "Sec-Fetch-Site" request header is "same-
+       origin" then return TRUE.
 
-6.3.2.2.  Cross-Origin
+   3.  If there is no "Sec-Fetch-Mode" request header then return TRUE.
 
-   For requests that are not same-origin (Section 6.3.2.1), the "mode"
-   of the request can be used to determine the readability of the
-   response.
+   4.  If the value of the "Sec-Fetch-Mode" request header is "navigate"
+       or "same-origin" then return TRUE.
 
-   For clients that conform to the fetch spec, the mode of the request
-   is stored in the RequestMode attribute of the request
-   (https://fetch.spec.whatwg.org/#requestmode).
+   5.  If the value of the "Sec-Fetch-Mode" request header is "cors":
 
-   For servers responding to clients that expose the request mode
-   information, the value of the mode is sent in the "Sec-Fetch-Mode"
-   request header.
+       *  If the response does not include an "Access-Control-Allow-
+          Origin" response header then return FALSE.
 
-   If a "Sec-Fetch-Mode" request header is not present, the server
-   SHOULD allow for the dictionary compression to be used.
+       *  If the request does not include an "Origin" request header
+          then return FALSE.
 
-   1.  If the mode is "navigate" or "same-origin":
+       *  If the value of the "Access-Control-Allow-Origin" response
+          header is "*" then return TRUE.
 
-       *  Response MAY be used as a dictionary.
+       *  If the value of the "Access-Control-Allow-Origin" response
+          header matches the value of the "Origin" request header then
+          return TRUE.
 
-       *  Response MAY be compressed by an available dictionary.
+   6.  return FALSE.
 
-   2.  If the mode is "cors":
-
-       *  For clients, apply the CORS check from the fetch spec
-          (https://fetch.spec.whatwg.org/#cors-check) which includes
-          credentials checking restrictions that may not be possible to
-          check on the server.
-
-          -  If the CORS check passes:
-
-             o  Response MAY be used as a dictionary.
-
-             o  Response MAY be compressed by an available dictionary.
-
-          -  Else:
-
-             o  Response MUST NOT be used as a dictionary.
-
-             o  Response MUST NOT be compressed by an available
-                dictionary.
-
-       *  For servers:
-
-          -  If the response does not include an "Access-Control-Allow-
-             Origin" response header:
-
-             o  Response MUST NOT be used as a dictionary.
-
-             o  Response MUST NOT be compressed by an available
-                dictionary.
-
-          -  If the request does not include an "Origin" request header:
-
-             o  Response MUST NOT be used as a dictionary.
-
-             o  Response MUST NOT be compressed by an available
-                dictionary.
-
-          -  If the value of the "Access-Control-Allow-Origin" response
-             header is "*":
-
-             o  Response MAY be used as a dictionary.
-
-             o  Response MAY be compressed by an available dictionary.
-
-          -  If the value of the "Access-Control-Allow-Origin" response
-             header matches the value of the "Origin" request header:
-
-             o  Response MAY be used as a dictionary.
-
-             o  Response MAY be compressed by an available dictionary.
-
-   3.  If the mode is any other value (including "no-cors"):
-
-       *  Response MUST NOT be used as a dictionary.
-
-       *  Response MUST NOT be compressed by an available dictionary.
-
-7.  Privacy Considerations
+10.  Privacy Considerations
 
    Since dictionaries are advertised in future requests using the hash
    of the content of the dictionary, it is possible to abuse the
    dictionary to turn it into a tracking cookie.
 
    To mitigate any additional tracking concerns, clients MUST treat
-   dictionaries in the same way that they treat cookies.  This includes
-   partitioning the storage as cookies are partitioned as well as
-   clearing the dictionaries whenever cookies are cleared.
+   dictionaries in the same way that they treat cookies [RFC6265].  This
+   includes partitioning the storage as cookies are partitioned as well
+   as clearing the dictionaries whenever cookies are cleared.
 
-8.  References
+11.  References
 
-8.1.  Normative References
+11.1.  Normative References
+
+   [FETCH]    WHATWG, "Fetch - Living Standard", June 2024,
+              <https://fetch.spec.whatwg.org>.
 
    [FOLDING]  Watsen, K., Auerswald, E., Farrel, A., and Q. Wu,
               "Handling Long Lines in Content of Internet-Drafts and
@@ -646,28 +708,9 @@ Table of Contents
               DOI 10.17487/RFC2119, March 1997,
               <https://www.rfc-editor.org/rfc/rfc2119>.
 
-   [RFC5861]  Nottingham, M., "HTTP Cache-Control Extensions for Stale
-              Content", RFC 5861, DOI 10.17487/RFC5861, May 2010,
-              <https://www.rfc-editor.org/rfc/rfc5861>.
-
    [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
               May 2017, <https://www.rfc-editor.org/rfc/rfc8174>.
-
-8.2.  Informative References
-
-   [Origin]   Barth, A., "The Web Origin Concept", RFC 6454,
-              DOI 10.17487/RFC6454, December 2011,
-              <https://www.rfc-editor.org/rfc/rfc6454>.
-
-   [RFC7932]  Alakuijala, J. and Z. Szabadka, "Brotli Compressed Data
-              Format", RFC 7932, DOI 10.17487/RFC7932, July 2016,
-              <https://www.rfc-editor.org/rfc/rfc7932>.
-
-   [RFC8878]  Collet, Y. and M. Kucherawy, Ed., "Zstandard Compression
-              and the 'application/zstd' Media Type", RFC 8878,
-              DOI 10.17487/RFC8878, February 2021,
-              <https://www.rfc-editor.org/rfc/rfc8878>.
 
    [SHA-256]  Eastlake 3rd, D. and T. Hansen, "US Secure Hash Algorithms
               (SHA and SHA-based HMAC and HKDF)", RFC 6234,
@@ -675,9 +718,52 @@ Table of Contents
               <https://www.rfc-editor.org/rfc/rfc6234>.
 
    [STRUCTURED-FIELDS]
-              Nottingham, M. and P. Kamp, "Structured Field Values for
-              HTTP", RFC 8941, DOI 10.17487/RFC8941, February 2021,
-              <https://www.rfc-editor.org/rfc/rfc8941>.
+              "Structured Field Values for HTTP", May 2024,
+              <https://datatracker.ietf.org/doc/draft-ietf-httpbis-
+              sfbis/>.
+
+   [URLPattern]
+              WHATWG, "URL Pattern - Living Standard", March 2024,
+              <https://urlpattern.spec.whatwg.org/>.
+
+   [WEB-LINKING]
+              Nottingham, M., "Web Linking", RFC 8288,
+              DOI 10.17487/RFC8288, October 2017,
+              <https://www.rfc-editor.org/rfc/rfc8288>.
+
+11.2.  Informative References
+
+   [RFC5861]  Nottingham, M., "HTTP Cache-Control Extensions for Stale
+              Content", RFC 5861, DOI 10.17487/RFC5861, May 2010,
+              <https://www.rfc-editor.org/rfc/rfc5861>.
+
+   [RFC6265]  Barth, A., "HTTP State Management Mechanism", RFC 6265,
+              DOI 10.17487/RFC6265, April 2011,
+              <https://www.rfc-editor.org/rfc/rfc6265>.
+
+   [RFC7457]  Sheffer, Y., Holz, R., and P. Saint-Andre, "Summarizing
+              Known Attacks on Transport Layer Security (TLS) and
+              Datagram TLS (DTLS)", RFC 7457, DOI 10.17487/RFC7457,
+              February 2015, <https://www.rfc-editor.org/rfc/rfc7457>.
+
+   [RFC7932]  Alakuijala, J. and Z. Szabadka, "Brotli Compressed Data
+              Format", RFC 7932, DOI 10.17487/RFC7932, July 2016,
+              <https://www.rfc-editor.org/rfc/rfc7932>.
+
+   [RFC8792]  Watsen, K., Auerswald, E., Farrel, A., and Q. Wu,
+              "Handling Long Lines in Content of Internet-Drafts and
+              RFCs", RFC 8792, DOI 10.17487/RFC8792, June 2020,
+              <https://www.rfc-editor.org/rfc/rfc8792>.
+
+   [RFC8878]  Collet, Y. and M. Kucherawy, Ed., "Zstandard Compression
+              and the 'application/zstd' Media Type", RFC 8878,
+              DOI 10.17487/RFC8878, February 2021,
+              <https://www.rfc-editor.org/rfc/rfc8878>.
+
+   [SHARED-BROTLI]
+              "Shared Brotli Compressed Data Format", September 2022,
+              <https://datatracker.ietf.org/doc/draft-vandevenne-shared-
+              brotli-format/>.
 
 Authors' Addresses
 
@@ -687,5 +773,5 @@ Authors' Addresses
 
 
    Yoav Weiss (editor)
-   Google LLC
-   Email: yoavweiss@google.com
+   Shopify Inc
+   Email: yoav.weiss@shopify.com

@@ -1394,9 +1394,10 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </li>
       </ul>
 <p id="section-2-3">Typically, this means that a field definition will specify the top-level type -- List, Dictionary, or Item -- and then define its allowable types and constraints upon them. For example, a header defined as a List might have all Integer members, or a mix of types; a header defined as an Item might allow only Strings, and additionally only strings beginning with the letter "Q", or strings in lowercase. Likewise, Inner Lists (<a href="#inner-list" class="auto internal xref">Section 3.1.1</a>) are only valid when a field definition explicitly allows them.<a href="#section-2-3" class="pilcrow">¶</a></p>
-<p id="section-2-4">Field definitions can only use this specification for the entire field value, not a portion thereof.<a href="#section-2-4" class="pilcrow">¶</a></p>
-<p id="section-2-5">Specifications can refer to a field name as a "structured header name", "structured trailer name", or "structured field name" as appropriate. Likewise, they can refer its field value as a "structured header value", "structured trailer value", or "structured field value" as necessary.<a href="#section-2-5" class="pilcrow">¶</a></p>
-<p id="section-2-6">This specification defines minimums for the length or number of various structures supported by implementations. It does not specify maximum sizes in most cases, but authors should be aware that HTTP implementations do impose various limits on the size of individual fields, the total number of fields, and/or the size of the entire header or trailer section.<a href="#section-2-6" class="pilcrow">¶</a></p>
+<p id="section-2-4">Fields that use the Display String type are advised to carefully specify their allowable unicode code points; for example, specifying the use of a profile from <span>[<a href="#PRECIS" class="cite xref">PRECIS</a>]</span>.<a href="#section-2-4" class="pilcrow">¶</a></p>
+<p id="section-2-5">Field definitions can only use this specification for the entire field value, not a portion thereof.<a href="#section-2-5" class="pilcrow">¶</a></p>
+<p id="section-2-6">Specifications can refer to a field name as a "structured header name", "structured trailer name", or "structured field name" as appropriate. Likewise, they can refer its field value as a "structured header value", "structured trailer value", or "structured field value" as necessary.<a href="#section-2-6" class="pilcrow">¶</a></p>
+<p id="section-2-7">This specification defines minimums for the length or number of various structures supported by implementations. It does not specify maximum sizes in most cases, but authors should be aware that HTTP implementations do impose various limits on the size of individual fields, the total number of fields, and/or the size of the entire header or trailer section.<a href="#section-2-7" class="pilcrow">¶</a></p>
 <div id="example">
 <section id="section-2.1">
         <h3 id="name-example">
@@ -1754,7 +1755,7 @@ Example-Date: @1659578233
 <p id="section-3.3.8-1">Display Strings are similar to Strings, in that they consist of zero or more characters, but they allow Unicode scalar values (i.e., all Unicode code points except for surrogates), unlike Strings.<a href="#section-3.3.8-1" class="pilcrow">¶</a></p>
 <p id="section-3.3.8-2">Display Strings are intended for use in cases where a value is displayed to end users, and therefore may need to carry non-ASCII content. It is NOT RECOMMENDED that they be used in situations where a String (<a href="#string" class="auto internal xref">Section 3.3.3</a>) or Token (<a href="#token" class="auto internal xref">Section 3.3.4</a>) would be adequate, because Unicode has processing considerations (e.g., normalization) and security considerations (e.g., homograph attacks) that make it more difficult to handle correctly.<a href="#section-3.3.8-2" class="pilcrow">¶</a></p>
 <p id="section-3.3.8-3">Note that Display Strings do not indicate the language used in the value; that can be done separately if necessary (e.g., with a parameter).<a href="#section-3.3.8-3" class="pilcrow">¶</a></p>
-<p id="section-3.3.8-4">In textual HTTP headers, Display Strings are represented in a manner similar to Strings, except that non-ASCII characters are percent-encoded; there is a leading "%" to distinguish them from Strings.<a href="#section-3.3.8-4" class="pilcrow">¶</a></p>
+<p id="section-3.3.8-4">In textual HTTP fields, Display Strings are represented in a manner similar to Strings, except that non-ASCII characters are percent-encoded; there is a leading "%" to distinguish them from Strings.<a href="#section-3.3.8-4" class="pilcrow">¶</a></p>
 <p id="section-3.3.8-5">For example:<a href="#section-3.3.8-5" class="pilcrow">¶</a></p>
 <div class="lang-http-message-new sourcecode" id="section-3.3.8-6">
 <pre>
@@ -3097,7 +3098,7 @@ field values that refer to it.<a href="#section-5-2.1.2" class="pilcrow">¶</a><
 <p id="section-6-1">The size of most types defined by Structured Fields is not limited; as a result, extremely large fields could be an attack vector (e.g., for resource consumption). Most HTTP implementations limit the sizes of individual fields as well as the overall header or trailer section size to mitigate such attacks.<a href="#section-6-1" class="pilcrow">¶</a></p>
 <p id="section-6-2">It is possible for parties with the ability to inject new HTTP fields to change the meaning
 of a Structured Field. In some circumstances, this will cause parsing to fail, but it is not possible to reliably fail in all such circumstances.<a href="#section-6-2" class="pilcrow">¶</a></p>
-<p id="section-6-3">The Display String type can convey any possible Unicode code point without sanitization; for example, they might contain unassigned code points, control points (including NUL), or noncharacters. Therefore, applications consuming Display Strings need to consider strategies such as filtering or escaping untrusted content before displaying it. See also <span>[<a href="#UNICODE-SECURITY" class="cite xref">UNICODE-SECURITY</a>]</span>.<a href="#section-6-3" class="pilcrow">¶</a></p>
+<p id="section-6-3">The Display String type can convey any possible Unicode code point without sanitization; for example, they might contain unassigned code points, control points (including NUL), or noncharacters. Therefore, applications consuming Display Strings need to consider strategies such as filtering or escaping untrusted content before displaying it. See <span>[<a href="#PRECIS" class="cite xref">PRECIS</a>]</span> and <span>[<a href="#UNICODE-SECURITY" class="cite xref">UNICODE-SECURITY</a>]</span>.<a href="#section-6-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="sec-combined-references">
@@ -3155,6 +3156,10 @@ of a Structured Field. In some circumstances, this will cause parsing to fail, b
 <dt id="IEEE754">[IEEE754]</dt>
         <dd>
 <span class="refAuthor">IEEE</span>, <span class="refTitle">"IEEE Standard for Floating-Point Arithmetic"</span>, <span class="seriesInfo">IEEE 754-2019</span>, <span class="seriesInfo">DOI 10.1109/IEEESTD.2019.8766229</span>, <span class="seriesInfo">ISBN 978-1-5044-5924-2</span>, <time datetime="2019-07" class="refDate">July 2019</time>, <span>&lt;<a href="https://ieeexplore.ieee.org/document/8766229">https://ieeexplore.ieee.org/document/8766229</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="PRECIS">[PRECIS]</dt>
+        <dd>
+<span class="refAuthor">Saint-Andre, P.</span> and <span class="refAuthor">M. Blanchet</span>, <span class="refTitle">"PRECIS Framework: Preparation, Enforcement, and Comparison of Internationalized Strings in Application Protocols"</span>, <span class="seriesInfo">RFC 8264</span>, <span class="seriesInfo">DOI 10.17487/RFC8264</span>, <time datetime="2017-10" class="refDate">October 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8264">https://www.rfc-editor.org/rfc/rfc8264</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC5234">[RFC5234]</dt>
         <dd>

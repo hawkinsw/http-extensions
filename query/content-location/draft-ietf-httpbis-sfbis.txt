@@ -244,6 +244,10 @@ Table of Contents
    in lowercase.  Likewise, Inner Lists (Section 3.1.1) are only valid
    when a field definition explicitly allows them.
 
+   Fields that use the Display String type are advised to carefully
+   specify their allowable unicode code points; for example, specifying
+   the use of a profile from [PRECIS].
+
    Field definitions can only use this specification for the entire
    field value, not a portion thereof.
 
@@ -726,7 +730,7 @@ Table of Contents
    value; that can be done separately if necessary (e.g., with a
    parameter).
 
-   In textual HTTP headers, Display Strings are represented in a manner
+   In textual HTTP fields, Display Strings are represented in a manner
    similar to Strings, except that non-ASCII characters are percent-
    encoded; there is a leading "%" to distinguish them from Strings.
 
@@ -1768,7 +1772,7 @@ Table of Contents
    points, control points (including NUL), or noncharacters.  Therefore,
    applications consuming Display Strings need to consider strategies
    such as filtering or escaping untrusted content before displaying it.
-   See also [UNICODE-SECURITY].
+   See [PRECIS] and [UNICODE-SECURITY].
 
 7.  References
 
@@ -1814,6 +1818,12 @@ Table of Contents
               IEEE 754-2019, DOI 10.1109/IEEESTD.2019.8766229,
               ISBN 978-1-5044-5924-2, July 2019,
               <https://ieeexplore.ieee.org/document/8766229>.
+
+   [PRECIS]   Saint-Andre, P. and M. Blanchet, "PRECIS Framework:
+              Preparation, Enforcement, and Comparison of
+              Internationalized Strings in Application Protocols",
+              RFC 8264, DOI 10.17487/RFC8264, October 2017,
+              <https://www.rfc-editor.org/rfc/rfc8264>.
 
    [RFC5234]  Crocker, D., Ed. and P. Overell, "Augmented BNF for Syntax
               Specifications: ABNF", STD 68, RFC 5234,

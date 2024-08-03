@@ -11,21 +11,22 @@ Expires: 4 February 2025                                Guardian Project
                                                            3 August 2024
 
 
-                The Signature HTTP Authentication Scheme
+                The Concealed HTTP Authentication Scheme
                draft-ietf-httpbis-unprompted-auth-latest
 
 Abstract
 
-   Existing HTTP authentication schemes are probeable in the sense that
-   it is possible for an unauthenticated client to probe whether an
-   origin serves resources that require authentication.  It is possible
-   for an origin to hide the fact that it requires authentication by not
+   Most HTTP authentication schemes are probeable in the sense that it
+   is possible for an unauthenticated client to probe whether an origin
+   serves resources that require authentication.  It is possible for an
+   origin to hide the fact that it requires authentication by not
    generating Unauthorized status codes, however that only works with
    non-cryptographic authentication schemes: cryptographic signatures
-   require a fresh nonce to be signed, and there is no existing way for
-   the origin to share such a nonce without exposing the fact that it
-   serves resources that require authentication.  This document proposes
-   a new non-probeable cryptographic authentication scheme.
+   require a fresh nonce to be signed.  At the time of writing, there
+   was no existing way for the origin to share such a nonce without
+   exposing the fact that it serves resources that require
+   authentication.  This document proposes a new non-probeable
+   cryptographic authentication scheme.
 
 About This Document
 
@@ -79,28 +80,33 @@ Table of Contents
 
    1.  Introduction
      1.1.  Conventions and Definitions
-   2.  The Signature Authentication Scheme
-   3.  TLS Usage
-   4.  Computing the Authentication Proof
-     4.1.  Key Exporter Context
-     4.2.  Key Exporter Output
-     4.3.  Signature Computation
-   5.  Authentication Parameters
-     5.1.  The k Parameter
-     5.2.  The a Parameter
-     5.3.  The p Parameter
-     5.4.  The s Parameter
-     5.5.  The v Parameter
-   6.  Example
-   7.  Non-Probeable Server Handling
-   8.  Intermediary Considerations
-   9.  Security Considerations
-   10. IANA Considerations
-     10.1.  HTTP Authentication Schemes Registry
-     10.2.  TLS Keying Material Exporter Labels
-   11. References
-     11.1.  Normative References
-     11.2.  Informative References
+   2.  The Concealed Authentication Scheme
+   3.  Client Handling
+     3.1.  Key Exporter Context
+       3.1.1.  Public Key Encoding
+     3.2.  Key Exporter Output
+     3.3.  Signature Computation
+   4.  Authentication Parameters
+     4.1.  The k Parameter
+     4.2.  The a Parameter
+     4.3.  The p Parameter
+     4.4.  The s Parameter
+     4.5.  The v Parameter
+   5.  Example
+   6.  Server Handling
+     6.1.  Frontend Handling
+     6.2.  Communication between Frontend and Backend
+     6.3.  Backend Handling
+     6.4.  Non-Probeable Server Handling
+   7.  Requirements on TLS Usage
+   8.  Security Considerations
+   9.  IANA Considerations
+     9.1.  HTTP Authentication Schemes Registry
+     9.2.  TLS Keying Material Exporter Labels
+     9.3.  HTTP Field Name
+   10. References
+     10.1.  Normative References
+     10.2.  Informative References
    Acknowledgments
    Authors' Addresses
 
@@ -118,17 +124,18 @@ Table of Contents
    example, a company might offer remote employee access to company
    services directly via its website using their employee credentials,
    or offer access to limited special capabilities for specific
-   employees, while making discovering (probing for) such capabilities
-   difficult.  Members of less well-defined communities might use more
-   ephemeral keys to acquire access to geography- or capability-specific
-   resources, as issued by an entity whose user base is larger than the
-   available resources can support (by having that entity metering the
-   availability of keys temporally or geographically).
+   employees, while making discovering (or probing for) such
+   capabilities difficult.  Members of less well-defined communities
+   might use more ephemeral keys to acquire access to geography- or
+   capability-specific resources, as issued by an entity whose user base
+   is larger than the available resources can support (by having that
+   entity metering the availability of keys temporally or
+   geographically).
 
    While digital-signature-based HTTP authentication schemes already
-   exist ([HOBA]), they rely on the origin explicitly sending a fresh
-   challenge to the client, to ensure that the signature input is fresh.
-   That makes the origin probeable as it send the challenge to
+   exist (e.g., [HOBA]), they rely on the origin explicitly sending a
+   fresh challenge to the client, to ensure that the signature input is
+   fresh.  That makes the origin probeable as it sends the challenge to
    unauthenticated clients.  This document defines a new signature-based
    authentication scheme that is not probeable.
 
@@ -142,54 +149,32 @@ Table of Contents
 
    This document uses the notation from Section 1.3 of [QUIC].
 
-2.  The Signature Authentication Scheme
+2.  The Concealed Authentication Scheme
 
-   This document defines the "Signature" HTTP authentication scheme.  It
-   uses asymmetric cryptography.  User agents possess a key ID and a
-   public/private key pair, and origin servers maintain a mapping of
-   authorized key IDs to their associated public keys.
+   This document defines the "Concealed" HTTP authentication scheme.  It
+   uses asymmetric cryptography.  Clients possess a key ID and a public/
+   private key pair, and origin servers maintain a mapping of authorized
+   key IDs to their associated public keys.
 
    The client uses a TLS keying material exporter to generate data to be
-   signed (see Section 4) then sends the signature using the
+   signed (see Section 3) then sends the signature using the
    Authorization or Proxy-Authorization header field.  The signature and
    additional information are exchanged using authentication parameters
-   (see Section 5).
+   (see Section 4).
 
-3.  TLS Usage
+3.  Client Handling
 
-   This authentication scheme is only defined for uses of HTTP with TLS
-   [TLS].  This includes any use of HTTP over TLS as typically used for
-   HTTP/2 [HTTP/2], or HTTP/3 [HTTP/3] where the transport protocol uses
-   TLS as its authentication and key exchange mechanism [QUIC-TLS].
+   When a client wishes to uses the Concealed HTTP authentication scheme
+   with a request, it SHALL compute the authentication proof using a TLS
+   keying material exporter [KEY-EXPORT] with the following parameters:
 
-   Because the TLS keying material exporter is only secure for
-   authentication when it is uniquely bound to the TLS session
-   [RFC7627], the Signature authentication scheme requires either one of
-   the following properties:
+   *  the label is set to "EXPORTER-HTTP-Concealed-Authentication"
 
-   *  The TLS version in use is greater or equal to 1.3 [TLS].
+   *  the context is set to the structure described in Section 3.1
 
-   *  The TLS version in use is 1.2 and the Extended Master Secret
-      extension [RFC7627] has been negotiated.
+   *  the exporter output length is set to 48 bytes (see Section 3.2)
 
-   Clients MUST NOT use the Signature authentication scheme on
-   connections that do not meet one of the two properties above.  If a
-   server receives a request that uses this authentication scheme on a
-   connection that meets neither of the above properties, the server
-   MUST treat the request as malformed.
-
-4.  Computing the Authentication Proof
-
-   The user agent computes the authentication proof using a TLS keying
-   material exporter [KEY-EXPORT] with the following parameters:
-
-   *  the label is set to "EXPORTER-HTTP-Signature-Authentication"
-
-   *  the context is set to the structure described in Section 4.1
-
-   *  the exporter output length is set to 48 bytes (see Section 4.2)
-
-4.1.  Key Exporter Context
+3.1.  Key Exporter Context
 
    The TLS key exporter context is described in Figure 1:
 
@@ -211,13 +196,13 @@ Table of Contents
    The key exporter context contains the following fields:
 
    Signature Algorithm:  The signature scheme sent in the s Parameter
-      (see Section 5.4).
+      (see Section 4.4).
 
-   Key ID:  The key ID sent in the k Parameter (see Section 5.1).
+   Key ID:  The key ID sent in the k Parameter (see Section 4.1).
 
    Public Key:  The public key used by the server to validate the
-      signature provided by the client (the encoding is described
-      below).
+      signature provided by the client.  Its encoding is described in
+      Section 3.1.1.
 
    Scheme:  The scheme for this request, encoded using the format of the
       scheme portion of a URI as defined in Section 3.1 of [URI].
@@ -229,7 +214,7 @@ Table of Contents
       Note that the port is either included in the URI, or is the
       default port for the scheme in use; see Section 3.2.3 of [URI].
 
-   Realm:  The real of authentication that is sent in the realm
+   Realm:  The realm of authentication that is sent in the realm
       authentication parameter (Section 11.5 of [HTTP]).  If the realm
       authentication parameter is not present, this SHALL be empty.
       This document does not define a means for the origin to
@@ -239,13 +224,17 @@ Table of Contents
 
    The Signature Algorithm and Port fields are encoded as unsigned
    16-bit integers in network byte order.  The Key ID, Public Key,
-   Scheme, Host, and Real fields are length prefixed strings; they are
+   Scheme, Host, and Realm fields are length prefixed strings; they are
    preceded by a Length field that represents their length in bytes.
    These length fields are encoded using the variable-length integer
    encoding from Section 16 of [QUIC] and MUST be encoded in the minimum
    number of bytes necessary.
 
-   The encoding of the public key is determined by the Signature
+3.1.1.  Public Key Encoding
+
+   Both the "Public Key" field of the TLS key exporter context (see
+   above) and the a Parameter (see Section 4.2) carry the same public
+   key.  The encoding of the public key is determined by the Signature
    Algorithm in use as follows:
 
    RSASSA-PSS algorithms:  The public key is an RSAPublicKey structure
@@ -262,10 +251,10 @@ Table of Contents
 
    This document does not define the public key encodings for other
    algorithms.  In order for a SignatureScheme to be usable with the
-   Signature HTTP authentication scheme, its public key encoding needs
+   Concealed HTTP authentication scheme, its public key encoding needs
    to be defined in a corresponding document.
 
-4.2.  Key Exporter Output
+3.2.  Key Exporter Output
 
    The key exporter output is 48 bytes long.  Of those, the first 32
    bytes are part of the input to the signature and the next 16 bytes
@@ -281,26 +270,26 @@ Table of Contents
    The key exporter context contains the following fields:
 
    Signature Input:  This is part of the data signed using the client's
-      chosen asymmetric private key (see Section 4.3).
+      chosen asymmetric private key (see Section 3.3).
 
    Verification:  The verification is transmitted to the server using
-      the v Parameter (see Section 5.5).
+      the v Parameter (see Section 4.5).
 
-4.3.  Signature Computation
+3.3.  Signature Computation
 
    Once the Signature Input has been extracted from the key exporter
-   output (see Section 4.2), it is prefixed with static data before
+   output (see Section 3.2), it is prefixed with static data before
    being signed to mitigate issues caused by key reuse.  The signature
    is computed over the concatenation of:
 
    *  A string that consists of octet 32 (0x20) repeated 64 times
 
-   *  The context string "HTTP Signature Authentication"
+   *  The context string "HTTP Concealed Authentication"
 
    *  A single 0 byte which serves as a separator
 
    *  The Signature Input extracted from the key exporter output (see
-      Section 4.2)
+      Section 3.2)
 
    For example, if the Signature Input has all its 32 bytes set to 01,
    the content covered by the signature (in hexadecimal format) would
@@ -314,91 +303,189 @@ Table of Contents
 
                Figure 3: Example Content Covered by Signature
 
-   This constructions mirrors that of the TLS 1.3 CertificateVerify
+   This construction mirrors that of the TLS 1.3 CertificateVerify
    message defined in Section 4.4.3 of [TLS].
 
    The resulting signature is then transmitted to the server using the p
-   Parameter (see Section 5.3).
+   Parameter (see Section 4.3).
 
-5.  Authentication Parameters
+4.  Authentication Parameters
 
    This specification defines the following authentication parameters.
 
    All of the byte sequences below are encoded using base64url (see
    Section 5 of [BASE64]) without quotes and without padding.  In other
-   words, these byte sequence authentication parameters values MUST NOT
-   include any characters other then ASCII letters, digits, dash and
-   underscore.
+   words, the values of these byte-sequence authentication parameters
+   MUST NOT include any characters other then ASCII letters, digits,
+   dash and underscore.
 
    The integer below is encoded without a minus and without leading
-   zeroes.  In other words, the integer authentication parameters value
-   MUST NOT include any characters other than digits, and MUST NOT start
-   with a zero unless the full value is "0".
+   zeroes.  In other words, the value of this integer authentication
+   parameter MUST NOT include any characters other than digits, and MUST
+   NOT start with a zero unless the full value is "0".
 
    Using the syntax from [ABNF]:
 
-   signature-byte-sequence-param-value = *( ALPHA / DIGIT / "-" / "_" )
-   signature-integer-param-value =  %x31-39 1*4( DIGIT ) / "0"
+   concealed-byte-sequence-param-value = *( ALPHA / DIGIT / "-" / "_" )
+   concealed-integer-param-value =  %x31-39 1*4( DIGIT ) / "0"
 
                Figure 4: Authentication Parameter Value ABNF
 
-5.1.  The k Parameter
+4.1.  The k Parameter
 
-   The REQUIRED "k" (key ID) parameter is a byte sequence that
-   identifies which key the user agent wishes to use to authenticate.
-   This can for example be used to point to an entry into a server-side
+   The REQUIRED "k" (key ID) Parameter is a byte sequence that
+   identifies which key the client wishes to use to authenticate.  This
+   can, for example, be used to point to an entry in a server-side
    database of known keys.
 
-5.2.  The a Parameter
+4.2.  The a Parameter
 
-   The REQUIRED "a" (public key) parameter is a byte sequence that
-   contains the public key used by the server to validate the signature
+   The REQUIRED "a" (public key) Parameter is a byte sequence that
+   specifies the public key used by the server to validate the signature
    provided by the client.  This avoids key confusion issues (see
    [SEEMS-LEGIT]).  The encoding of the public key is described in
-   Section 4.1.
+   Section 3.1.1.
 
-5.3.  The p Parameter
+4.3.  The p Parameter
 
-   The REQUIRED "p" (proof) parameter is a byte sequence that specifies
-   the proof that the user agent provides to attest to possessing the
+   The REQUIRED "p" (proof) Parameter is a byte sequence that specifies
+   the proof that the client provides to attest to possessing the
    credential that matches its key ID.
 
-5.4.  The s Parameter
+4.4.  The s Parameter
 
-   The REQUIRED "s" (signature) parameter is an integer that specifies
-   the signature scheme used to compute the proof transmitted in the "p"
-   directive.  Its value is an integer between 0 and 65535 inclusive
+   The REQUIRED "s" (signature) Parameter is an integer that specifies
+   the signature scheme used to compute the proof transmitted in the p
+   Parameter.  Its value is an integer between 0 and 65535 inclusive
    from the IANA "TLS SignatureScheme" registry maintained at
    <https://www.iana.org/assignments/tls-parameters/tls-
    parameters.xhtml#tls-signaturescheme>.
 
-5.5.  The v Parameter
+4.5.  The v Parameter
 
-   The REQUIRED "v" (verification) parameter is a byte sequence that
-   specifies the verification that the user agent provides to attest to
-   possessing the key exporter output (see Section 4.2 for details).
+   The REQUIRED "v" (verification) Parameter is a byte sequence that
+   specifies the verification that the client provides to attest to
+   possessing the key exporter output (see Section 3.2 for details).
    This avoids issues with signature schemes where certain keys can
    generate signatures that are valid for multiple inputs (see
    [SEEMS-LEGIT]).
 
-6.  Example
+5.  Example
 
    For example, the key ID "basement" authenticating using Ed25519
    [ED25519] could produce the following header field:
 
    NOTE: '\' line wrapping per RFC 8792
 
-   Authorization: Signature \
+   Authorization: Concealed \
      k=YmFzZW1lbnQ, \
      a=VGhpcyBpcyBh-HB1YmxpYyBrZXkgaW4gdXNl_GhlcmU, \
      s=2055, \
      v=dmVyaWZpY2F0aW9u_zE2Qg, \
-     p=SW5zZXJ0_HNpZ25hdHVyZSBvZiBub25jZSBoZXJlIHdo\
-       aWNoIHRha2VzIDUxMiBiaXRz-GZvciBFZDI1NTE5IQ
+     p=QzpcV2luZG93c_xTeXN0ZW0zMlxkcml2ZXJz-ENyb3dkU\
+       3RyaWtlXEMtMDAwMDAwMDAyOTEtMD-wMC0w_DAwLnN5cw
 
                        Figure 5: Example Header Field
 
-7.  Non-Probeable Server Handling
+6.  Server Handling
+
+   In this section, we subdivide the server role in two:
+
+   *  the "frontend" runs in the HTTP server that terminates the TLS or
+      QUIC connection created by the client.
+
+   *  the "backend" runs in the HTTP server that has access to the
+      database of accepted key identifiers and public keys.
+
+   In most deployments, we expect the frontend and backend roles to both
+   be implemented in a single HTTP origin server (as defined in
+   Section 3.6 of [HTTP]).  However, these roles can be split such that
+   the frontend is an HTTP gateway (as defined in Section 3.7 of [HTTP])
+   and the backend is an HTTP origin server.
+
+6.1.  Frontend Handling
+
+   If a frontend is configured to check the Concealed authentication
+   scheme, it will parse the Authorization (or Proxy-Authorization)
+   header field.  If the authentication scheme is set to "Concealed",
+   the frontend MUST validate that all the required authentication
+   parameters are present and can be parsed correctly as defined in
+   Section 4.  If any parameter is missing or fails to parse, the
+   frontend MUST ignore the entire Authorization (or Proxy-
+   Authorization) header field.
+
+   The frontend then uses the data from these authentication parameters
+   to compute the key exporter output, as defined in Section 3.2.  The
+   frontend then shares the header field and the key exporter output
+   with the backend.
+
+6.2.  Communication between Frontend and Backend
+
+   If the frontend and backend roles are implemented in the same
+   machine, this can be handled by a simple function call.
+
+   If the roles are split between two separate HTTP servers, then the
+   backend won't be able to directly access the TLS keying material
+   exporter from the TLS connection between the client and frontend, so
+   the frontend needs to explictly send it.  This document defines the
+   "Concealed-Auth-Export" request header field for this purpose.  The
+   Concealed-Auth-Export header field's value is a Structured Field Byte
+   Sequence (see Section 3.3.5 of [STRUCTURED-FIELDS]) that contains the
+   48-byte key exporter output (see Section 3.2), without any
+   parameters.  For example:
+
+   NOTE: '\' line wrapping per RFC 8792
+
+   Concealed-Auth-Export: :VGhpcyBleGFtcGxlIFRMUyBleHBvcn\
+     RlciBvdXRwdXQgaXMgNDggYnl0ZXMgI/+h:
+
+            Figure 6: Example Concealed-Auth-Export Header Field
+
+   The frontend SHALL forward the HTTP request to the backend, including
+   the original unmodified Authorization (or Proxy-Authorization) header
+   field and the newly added Concealed-Auth-Export header field.
+
+   Note that, since the security of this mechanism requires the key
+   exporter output to be correct, backends need to trust frontends to
+   send it truthfully.  This trust relationship is common because the
+   frontend already needs access to the TLS certificate private key in
+   order to respond to requests.  HTTP servers that parse the Concealed-
+   Auth-Export header field MUST ignore it unless they have already
+   established that they trust the sender.  Similarly, frontends that
+   send the Concealed-Auth-Export header field MUST ensure that they do
+   not forward any Concealed-Auth-Export header field received from the
+   client.
+
+6.3.  Backend Handling
+
+   Once the backend receives the Authorization (or Proxy-Authorization)
+   header field and the key exporter output, it looks up the key ID in
+   its database of public keys.  The backend SHALL then perform the
+   following checks:
+
+   *  validate that all the required authentication parameters are
+      present and can be parsed correctly as defined in Section 4
+
+   *  ensure the key ID is present in the backend's database and maps to
+      a corresponding public key
+
+   *  validate that the public key from the database is equal to the one
+      in the Authorization (or Proxy-Authorization) header field
+
+   *  validate that the verification field from the Authorization (or
+      Proxy-Authorization) header field matches the one extracted from
+      the key exporter output
+
+   *  verify the cryptographic signature as defined in Section 3.3
+
+   If all of these checks succeed, the backend can consider the request
+   to be properly authenticated, and can reply accordingly (the backend
+   can also forward the request to another HTTP server).
+
+   If any of the above checks fail, the backend MUST treat it as if the
+   Authorization (or Proxy-Authorization) header field was missing.
+
+6.4.  Non-Probeable Server Handling
 
    Servers that wish to introduce resources whose existence cannot be
    probed need to ensure that they do not reveal any information about
@@ -406,33 +493,17 @@ Table of Contents
    servers MUST respond to authentication failures with the exact same
    response that they would have used for non-existent resources.  For
    example, this can mean using HTTP status code 404 (Not Found) instead
-   of 401 (Unauthorized).  Such authentication failures can be caused
-   for example by:
+   of 401 (Unauthorized).
 
-   *  absence of the Authorization (or Proxy-Authorization) field
-
-   *  failure to parse that field
-
-   *  use of the Signature authentication scheme with an unknown key ID
-
-   *  mismatch between key ID and provided public key
-
-   *  failure to validate the verification parameter
-
-   *  failure to validate the signature.
-
-   In order to validate the signature, the server needs to first parse
-   the field containing the signature, then look up the key ID in its
-   database of public keys, and finally perform the cryptographic
-   validation.  These steps can take time, and an attacker could detect
-   use of this mechanism if that time is observable by comparing the
-   timing of a request for a known non-existent resource to the timing
-   of a request for a potentially authenticated resource.  Servers can
-   mitigate this observability by slightly delaying responses to some
-   non-existent resources such that the timing of the authentication
-   verification is not observable.  This delay needs to be carefully
-   considered to avoid having the delay itself leak the fact that this
-   origin uses this mechanism at all.
+   The authentication checks described above can take time to compute,
+   and an attacker could detect use of this mechanism if that time is
+   observable by comparing the timing of a request for a known non-
+   existent resource to the timing of a request for a potentially
+   authenticated resource.  Servers can mitigate this observability by
+   slightly delaying responses to some non-existent resources such that
+   the timing of the authentication verification is not observable.
+   This delay needs to be carefully considered to avoid having the delay
+   itself leak the fact that this origin uses this mechanism at all.
 
    Non-probeable resources also need to be non-discoverable for
    unauthenticated users.  For example, if a server operator wishes to
@@ -442,39 +513,45 @@ Table of Contents
    other out-of-band ways for unauthenticated users to discover this
    resource.
 
-8.  Intermediary Considerations
+7.  Requirements on TLS Usage
 
-   Since the Signature HTTP authentication scheme leverages TLS keying
-   material exporters, its output cannot be transparently forwarded by
-   HTTP intermediaries.  HTTP intermediaries that support this
-   specification have two options:
+   This authentication scheme is only defined for uses of HTTP with TLS
+   [TLS].  This includes any use of HTTP over TLS as typically used for
+   HTTP/2 [HTTP/2], or HTTP/3 [HTTP/3] where the transport protocol uses
+   TLS as its authentication and key exchange mechanism [QUIC-TLS].
 
-   *  The intermediary can validate the authentication received from the
-      client, then inform the upstream HTTP server of the presence of
-      valid authentication.
+   Because the TLS keying material exporter is only secure for
+   authentication when it is uniquely bound to the TLS session
+   [RFC7627], the Concealed authentication scheme requires either one of
+   the following properties:
 
-   *  The intermediary can export the Signature Input and Verification
-      (see Section 4.2}), and forward it to the upstream HTTP server,
-      then the upstream server performs the validation.
+   *  The TLS version in use is greater or equal to 1.3 [TLS].
 
-   The mechanism for the intermediary to communicate this information to
-   the upstream HTTP server is out of scope for this document.
+   *  The TLS version in use is 1.2 and the Extended Master Secret
+      extension [RFC7627] has been negotiated.
 
-   Note that both of these mechanisms require the upstream HTTP server
-   to trust the intermediary.  This is usually the case because the
-   intermediary already needs access to the TLS certificate private key
-   in order to respond to requests.
+   Clients MUST NOT use the Concealed authentication scheme on
+   connections that do not meet one of the two properties above.  If a
+   server receives a request that uses this authentication scheme on a
+   connection that meets neither of the above properties, the server
+   MUST treat the request as if the authentication were not present.
 
-9.  Security Considerations
+8.  Security Considerations
 
-   The Signature HTTP authentication scheme allows a user agent to
+   The Concealed HTTP authentication scheme allows a client to
    authenticate to an origin server while guaranteeing freshness and
-   without the need for the server to transmit a nonce to the user
-   agent.  This allows the server to accept authenticated clients
-   without revealing that it supports or expects authentication for some
-   resources.  It also allows authentication without the user agent
-   leaking the presence of authentication to observers due to clear-text
-   TLS Client Hello extensions.
+   without the need for the server to transmit a nonce to the client.
+   This allows the server to accept authenticated clients without
+   revealing that it supports or expects authentication for some
+   resources.  It also allows authentication without the client leaking
+   the presence of authentication to observers due to clear-text TLS
+   Client Hello extensions.
+
+   Since the freshness described above is provided by a TLS key
+   exporter, it can be as old as the underlying TLS connection.  Servers
+   can require better freshness by forcing clients to create new
+   connections using mechanisms such as the GOAWAY frame (see
+   Section 5.2 of [HTTP/3]).
 
    The authentication proofs described in this document are not bound to
    individual HTTP requests; if the key is used for authentication
@@ -490,7 +567,7 @@ Table of Contents
    able to access the corresponding key, so binding authentication to
    requests would not provide much benefit in practice.
 
-   Key material used for the Signature HTTP authentication scheme MUST
+   Key material used for the Concealed HTTP authentication scheme MUST
    NOT be reused in other protocols.  Doing so can undermine the
    security guarantees of the authentication.
 
@@ -498,32 +575,45 @@ Table of Contents
    However, requests are not linkable across origins if the keys used
    are specific to the individual origins using this scheme.
 
-10.  IANA Considerations
+9.  IANA Considerations
 
-10.1.  HTTP Authentication Schemes Registry
+9.1.  HTTP Authentication Schemes Registry
 
    This document, if approved, requests IANA to register the following
    entry in the "HTTP Authentication Schemes" Registry maintained at
    <https://www.iana.org/assignments/http-authschemes>:
 
-   Authentication Scheme Name:  Signature
+   Authentication Scheme Name:  Concealed
    Reference:  This document
    Notes:  None
 
-10.2.  TLS Keying Material Exporter Labels
+9.2.  TLS Keying Material Exporter Labels
 
    This document, if approved, requests IANA to register the following
    entry in the "TLS Exporter Labels" registry maintained at
    <https://www.iana.org/assignments/tls-parameters#exporter-labels>:
 
-   Value:  EXPORTER-HTTP-Signature-Authentication
+   Value:  EXPORTER-HTTP-Concealed-Authentication
    DTLS-OK:  N
    Recommended:  Y
    Reference:  This document
 
-11.  References
+9.3.  HTTP Field Name
 
-11.1.  Normative References
+   This document, if approved, requests IANA to register the following
+   entry in the "Hypertext Transfer Protocol (HTTP) Field Name" registry
+   maintained at <https://www.iana.org/assignments/http-fields/http-
+   fields.xhtml>:
+
+   Field Name:  Concealed-Auth-Export
+   Template:  None
+   Status:  permanent
+   Reference:  This document
+   Comments:  None
+
+10.  References
+
+10.1.  Normative References
 
    [ABNF]     Crocker, D., Ed. and P. Overell, "Augmented BNF for Syntax
               Specifications: ABNF", STD 68, RFC 5234,
@@ -538,11 +628,6 @@ Table of Contents
               Signature Algorithm (EdDSA)", RFC 8032,
               DOI 10.17487/RFC8032, January 2017,
               <https://www.rfc-editor.org/rfc/rfc8032>.
-
-   [FOLDING]  Watsen, K., Auerswald, E., Farrel, A., and Q. Wu,
-              "Handling Long Lines in Content of Internet-Drafts and
-              RFCs", RFC 8792, DOI 10.17487/RFC8792, June 2020,
-              <https://www.rfc-editor.org/rfc/rfc8792>.
 
    [HTTP]     Fielding, R., Ed., Nottingham, M., Ed., and J. Reschke,
               Ed., "HTTP Semantics", STD 97, RFC 9110,
@@ -579,6 +664,16 @@ Table of Contents
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
               May 2017, <https://www.rfc-editor.org/rfc/rfc8174>.
 
+   [RFC8792]  Watsen, K., Auerswald, E., Farrel, A., and Q. Wu,
+              "Handling Long Lines in Content of Internet-Drafts and
+              RFCs", RFC 8792, DOI 10.17487/RFC8792, June 2020,
+              <https://www.rfc-editor.org/rfc/rfc8792>.
+
+   [STRUCTURED-FIELDS]
+              Nottingham, M. and P. Kamp, "Structured Field Values for
+              HTTP", RFC 8941, DOI 10.17487/RFC8941, February 2021,
+              <https://www.rfc-editor.org/rfc/rfc8941>.
+
    [TLS]      Rescorla, E., "The Transport Layer Security (TLS) Protocol
               Version 1.3", RFC 8446, DOI 10.17487/RFC8446, August 2018,
               <https://www.rfc-editor.org/rfc/rfc8446>.
@@ -593,7 +688,7 @@ Table of Contents
               Encoding Rules (CER) and Distinguished Encoding Rules
               (DER)", ISO/IEC 8824-1:2021 , February 2021.
 
-11.2.  Informative References
+10.2.  Informative References
 
    [ED25519]  Josefsson, S. and J. Schaad, "Algorithm Identifiers for
               Ed25519, Ed448, X25519, and X448 for Use in the Internet

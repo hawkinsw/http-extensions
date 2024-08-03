@@ -75,6 +75,7 @@ Table of Contents
      5.2.  "TLS"
      5.3.  "WebSocket"/"websocket"
      5.4.  "connect-udp"
+     5.5.  "connect-ip"
    6.  Guidance for Future Upgrade Tokens
    7.  IANA Considerations
    8.  References
@@ -238,10 +239,11 @@ Table of Contents
 
 5.2.  "TLS"
 
-   [RFC2817] correctly highlights the possibility of the server
-   rejecting the upgrade.  The security considerations documented here
-   are applicable to any use of the "TLS" Upgrade Token, but no change
-   is required in [RFC2817].
+   [RFC2817] defines the "TLS/_._" family of Upgrade Tokens, and
+   correctly highlights the possibility of the server rejecting the
+   upgrade.  The security considerations documented here are applicable
+   to any use of the "TLS" Upgrade Token, but no change is required in
+   [RFC2817].
 
 5.3.  "WebSocket"/"websocket"
 
@@ -294,6 +296,12 @@ Table of Contents
       HTTP/1.1 requests; otherwise it MUST abort the underlying
       connection.
 
+5.5.  "connect-ip"
+
+   The "connect-ip" Upgrade Token is defined in [RFC9484].  Section 11
+   of [RFC9484] forbids clients from using optimistic upgrade, avoiding
+   this issue.
+
 6.  Guidance for Future Upgrade Tokens
 
    There are now several good examples of designs that prevent the
@@ -338,6 +346,11 @@ Table of Contents
    [RFC9298]  Schinazi, D., "Proxying UDP in HTTP", RFC 9298,
               DOI 10.17487/RFC9298, August 2022,
               <https://www.rfc-editor.org/rfc/rfc9298>.
+
+   [RFC9484]  Pauly, T., Ed., Schinazi, D., Chernyakhovsky, A.,
+              Kühlewind, M., and M. Westerlund, "Proxying IP in HTTP",
+              RFC 9484, DOI 10.17487/RFC9484, October 2023,
+              <https://www.rfc-editor.org/rfc/rfc9484>.
 
 8.2.  Informative References
 

@@ -5,12 +5,12 @@
 HTTP                                                          J. Reschke
 Internet-Draft                                                greenbytes
 Intended status: Standards Track                             A. Malhotra
-Expires: 3 February 2025                                                
+Expires: 5 February 2025                                                
                                                               J.M. Snell
                                                                         
                                                                M. Bishop
                                                                   Akamai
-                                                           2 August 2024
+                                                           4 August 2024
 
 
                          The HTTP QUERY Method
@@ -50,7 +50,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 3 February 2025.
+   This Internet-Draft will expire on 5 February 2025.
 
 Copyright Notice
 
@@ -74,7 +74,8 @@ Table of Contents
    3.  The "Accept-Query" Header Field
    4.  Examples
      4.1.  Simple QUERY with a Direct Response
-     4.2.  Simple QUERY with indirect response (303 See Other)
+     4.2.  Simple QUERY with a Direct Response and Location fields
+     4.3.  Simple QUERY with indirect response (303 See Other)
    5.  Security Considerations
    6.  IANA Considerations
    7.  Normative References
@@ -176,6 +177,24 @@ Table of Contents
    retrieved using an HTTP GET request.  Various non-normative examples
    of successful QUERY responses are illustrated in Section 4.
 
+   A successful response to a QUERY request can include a Content-
+   Location header field (see Section 8.7 of [HTTP]) containing an
+   identifier for a resource corresponding to the results of the
+   operation.  This represents a claim from the server that a client can
+   send a GET request for the indicated URI to retrieve the results of
+   the query operation just performed.  The indicated resource might be
+   temporary.
+
+   A server MAY create or locate a resource that identifies the query
+   operation for future use.  If the server does so, the URI of the
+   resource can be included in the Location header field of the response
+   (see Section 10.2.2 of [HTTP]).  This represents a claim that a
+   client can send a GET request to the indicated URI to repeat the
+   query operation just performed without resending the query
+   parameters.  This resource might be temporary; if a future request
+   fails, the client can retry using the original QUERY resource and the
+   previously submitted parameters again.
+
    The semantics of the QUERY method change to a "conditional QUERY" if
    the request message includes an If-Modified-Since, If-Unmodified-
    Since, If-Match, If-None-Match, or If-Range header field ([HTTP],
@@ -258,7 +277,50 @@ Table of Contents
    Jones, Sally, sally.jones@example.com
    Dubois, Camille, camille.dubois@example.net
 
-4.2.  Simple QUERY with indirect response (303 See Other)
+4.2.  Simple QUERY with a Direct Response and Location fields
+
+   A simple query with a direct response:
+
+   QUERY /contacts HTTP/1.1
+   Host: example.org
+   Content-Type: example/query
+   Accept: text/csv
+
+   select surname, givenname, email limit 10
+
+   Response:
+
+   HTTP/1.1 200 OK
+   Content-Type: text/csv
+   Content-Location: /contacts/responses/42
+   Location: /contacts/queries/17
+
+   surname, givenname, email
+   Smith, John, john.smith@example.org
+   Jones, Sally, sally.jones@example.com
+   Dubois, Camille, camille.dubois@example.net
+
+   A subsequent GET request on /contacts/responses/42 would return the
+   same response, until the server decides to remove that resource.
+
+   A GET request on /contacts/queries/17 however would execute the same
+   query again, and return a fresh result for that query:
+
+   GET /contacts/queries/17 HTTP/1.1
+   Host: example.org
+   Accept: text/csv
+
+   Response:
+
+   HTTP/1.1 200 OK
+   Content-Type: text/csv
+   Content-Location: /contacts/responses/43
+
+   surname, givenname, email
+   Jones, Sally, sally.jones@example.com
+   Dubois, Camille, camille.dubois@example.net
+
+4.3.  Simple QUERY with indirect response (303 See Other)
 
    A simple query with an Indirect Response (303 See Other):
 
@@ -293,6 +355,14 @@ Table of Contents
 
    The QUERY method is subject to the same general security
    considerations as all HTTP methods as described in [HTTP].
+
+   The QUERY method can be used as an alternative to passing query
+   information in the query portion of a URI.  This is preferred in some
+   cases, as the URI is more likely to be logged than the request
+   content.  If a server creates a temporary resource to represent the
+   results of a QUERY request (e.g., for use in the Location or Content-
+   Location field), the URI of this resource SHOULD NOT expose the
+   original request content in plaintext.
 
 6.  IANA Considerations
 
@@ -381,6 +451,9 @@ A.4.  Since draft-ietf-httpbis-safe-method-w-body-03
       extensions/issues/1913)
 
 A.5.  Since draft-ietf-httpbis-safe-method-w-body-04
+
+   *  Describe role of Content-Location and Location fields
+      (https://github.com/httpwg/http-extensions/issues/1745)
 
    *  Added Mike Bishop as author (https://github.com/httpwg/http-
       extensions/issues/2837)

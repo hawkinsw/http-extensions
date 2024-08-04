@@ -4,9 +4,9 @@
 
 HTTPBIS                                                   B. M. Schwartz
 Internet-Draft                                      Meta Platforms, Inc.
-Updates: 9298 (if approved)                                2 August 2024
+Updates: 9298 (if approved)                                4 August 2024
 Intended status: Standards Track                                        
-Expires: 3 February 2025
+Expires: 5 February 2025
 
 
        Security Considerations for Optimistic Use of HTTP Upgrade
@@ -46,7 +46,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 3 February 2025.
+   This Internet-Draft will expire on 5 February 2025.
 
 Copyright Notice
 
@@ -357,9 +357,9 @@ Table of Contents
    [I-D.ietf-httpbis-connect-tcp]
               Schwartz, B. M., "Template-Driven HTTP CONNECT Proxying
               for TCP", Work in Progress, Internet-Draft, draft-ietf-
-              httpbis-connect-tcp-04, 22 July 2024,
+              httpbis-connect-tcp-05, 2 August 2024,
               <https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-
-              connect-tcp-04>.
+              connect-tcp-05>.
 
    [RFC2817]  Khare, R. and S. Lawrence, "Upgrading to TLS Within
               HTTP/1.1", RFC 2817, DOI 10.17487/RFC2817, May 2000,

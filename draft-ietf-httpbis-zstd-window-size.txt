@@ -6,7 +6,7 @@ HTTPBIS                                                     N. Jaju, Ed.
 Internet-Draft                                                    Google
 Updates: 8878 (if approved)                               F. Handte, Ed.
 Intended status: Informational                      Meta Platforms, Inc.
-Expires: 6 February 2025                                   5 August 2024
+Expires: 7 February 2025                                   6 August 2024
 
 
               Window Sizing for Zstandard Content Encoding
@@ -53,7 +53,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 6 February 2025.
+   This Internet-Draft will expire on 7 February 2025.
 
 Copyright Notice
 
@@ -131,6 +131,11 @@ Table of Contents
 
    This document introduces no new security considerations beyond those
    discussed in [RFC8878].
+
+   Note that decoders still need to take into account that they can
+   receive oversized frames that do not follow the window size limit
+   specified in this document and fail decoding when such invalid frames
+   are received.
 
 5.  IANA Considerations
 

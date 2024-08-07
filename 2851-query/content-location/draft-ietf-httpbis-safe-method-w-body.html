@@ -1036,7 +1036,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </tr></thead>
 <tfoot><tr>
 <td class="left">Reschke, et al.</td>
-<td class="center">Expires 5 February 2025</td>
+<td class="center">Expires 8 February 2025</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1047,12 +1047,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="workgroup">HTTP</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2024-08-04" class="published">4 August 2024</time>
+<time datetime="2024-08-07" class="published">7 August 2024</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2025-02-05">5 February 2025</time></dd>
+<dd class="expires"><time datetime="2025-02-08">8 February 2025</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1114,7 +1114,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 5 February 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 8 February 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1164,7 +1164,10 @@ svg :is([fill="white"], [fill^="#fff"]) {
                 <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="auto internal xref">4.1</a>.  <a href="#name-simple-query-with-a-direct-" class="internal xref">Simple QUERY with a Direct Response</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2">
-                <p id="section-toc.1-1.4.2.2.1"><a href="#section-4.2" class="auto internal xref">4.2</a>.  <a href="#name-simple-query-with-indirect-" class="internal xref">Simple QUERY with indirect response (303 See Other)</a></p>
+                <p id="section-toc.1-1.4.2.2.1"><a href="#section-4.2" class="auto internal xref">4.2</a>.  <a href="#name-simple-query-with-a-direct-r" class="internal xref">Simple QUERY with a Direct Response and Location fields</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.3">
+                <p id="section-toc.1-1.4.2.3.1"><a href="#section-4.3" class="auto internal xref">4.3</a>.  <a href="#name-simple-query-with-indirect-" class="internal xref">Simple QUERY with indirect response (303 See Other)</a></p>
 </li>
             </ul>
 </li>
@@ -1305,6 +1308,21 @@ q=foo&amp;limit=10&amp;sort=-published
       using an HTTP GET request. Various non-normative examples of successful
       QUERY responses are illustrated in <a href="#examples" class="auto internal xref">Section 4</a>.<a href="#section-2-4" class="pilcrow">¶</a></p>
 <p id="section-2-5">
+      A successful response to a QUERY request can include a Content-Location
+      header field (see <span><a href="https://rfc-editor.org/rfc/rfc9110#section-8.7" class="relref">Section 8.7</a> of [<a href="#HTTP" class="cite xref">HTTP</a>]</span>) containing an
+      identifier for a resource corresponding to the results of the
+      operation. This represents a claim from the server that a client can send
+      a GET request for the indicated URI to retrieve the results of the query
+      operation just performed. The indicated resource might be temporary.<a href="#section-2-5" class="pilcrow">¶</a></p>
+<p id="section-2-6">
+      A server <span class="bcp14">MAY</span> create or locate a resource that identifies the query
+      operation for future use. If the server does so, the URI of the resource
+      can be included in the Location header field of the response (see <span><a href="https://rfc-editor.org/rfc/rfc9110#section-10.2.2" class="relref">Section 10.2.2</a> of [<a href="#HTTP" class="cite xref">HTTP</a>]</span>). This represents a claim that a client can
+      send a GET request to the indicated URI to repeat the query operation just
+      performed without resending the query parameters. This resource might be
+      temporary; if a future request fails, the client can retry using the
+      original QUERY resource and the previously submitted parameters again.<a href="#section-2-6" class="pilcrow">¶</a></p>
+<p id="section-2-7">
       The semantics of the QUERY method change to a "conditional QUERY" if
       the request message includes an If-Modified-Since, If-Unmodified-
       Since, If-Match, If-None-Match, or If-Range header field
@@ -1312,7 +1330,7 @@ q=foo&amp;limit=10&amp;sort=-published
       be performed only under the circumstances described by the conditional
       header field(s). It is important to note, however, that such conditions
       are evaluated against the state of the target resource itself as opposed
-      to the collected results of the query operation.<a href="#section-2-5" class="pilcrow">¶</a></p>
+      to the collected results of the query operation.<a href="#section-2-7" class="pilcrow">¶</a></p>
 <section id="section-2.1">
         <h3 id="name-caching">
 <a href="#section-2.1" class="section-number selfRef">2.1. </a><a href="#name-caching" class="section-name selfRef">Caching</a>
@@ -1406,10 +1424,10 @@ Dubois, Camille, camille.dubois@example.net
 </div>
 </section>
 <section id="section-4.2">
-        <h3 id="name-simple-query-with-indirect-">
-<a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-simple-query-with-indirect-" class="section-name selfRef">Simple QUERY with indirect response (303 See Other)</a>
+        <h3 id="name-simple-query-with-a-direct-r">
+<a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-simple-query-with-a-direct-r" class="section-name selfRef">Simple QUERY with a Direct Response and Location fields</a>
         </h3>
-<p id="section-4.2-1">A simple query with an Indirect Response (303 See Other):<a href="#section-4.2-1" class="pilcrow">¶</a></p>
+<p id="section-4.2-1">A simple query with a direct response:<a href="#section-4.2-1" class="pilcrow">¶</a></p>
 <div class="alignLeft art-http-message art-text artwork" id="section-4.2-2">
 <pre>
 QUERY /contacts HTTP/1.1
@@ -1423,19 +1441,75 @@ select surname, givenname, email limit 10
 <p id="section-4.2-3">Response:<a href="#section-4.2-3" class="pilcrow">¶</a></p>
 <div class="alignLeft art-http-message art-text artwork" id="section-4.2-4">
 <pre>
-HTTP/1.1 303 See Other
-Location: http://example.org/contacts/query123
+HTTP/1.1 200 OK
+Content-Type: text/csv
+Content-Location: /contacts/responses/42
+Location: /contacts/queries/17
+
+surname, givenname, email
+Smith, John, john.smith@example.org
+Jones, Sally, sally.jones@example.com
+Dubois, Camille, camille.dubois@example.net
 </pre><a href="#section-4.2-4" class="pilcrow">¶</a>
 </div>
-<p id="section-4.2-5">Fetch Query Response:<a href="#section-4.2-5" class="pilcrow">¶</a></p>
-<div class="alignLeft art-http-message art-text artwork" id="section-4.2-6">
+<p id="section-4.2-5">
+      A subsequent GET request on /contacts/responses/42 would return
+      the same response, until the server decides to remove that
+      resource.<a href="#section-4.2-5" class="pilcrow">¶</a></p>
+<p id="section-4.2-6">
+      A GET request on /contacts/queries/17 however would execute the same
+      query again, and return a fresh result for that query:<a href="#section-4.2-6" class="pilcrow">¶</a></p>
+<div class="alignLeft art-http-message art-text artwork" id="section-4.2-7">
+<pre>
+GET /contacts/queries/17 HTTP/1.1
+Host: example.org
+Accept: text/csv
+</pre><a href="#section-4.2-7" class="pilcrow">¶</a>
+</div>
+<p id="section-4.2-8">Response:<a href="#section-4.2-8" class="pilcrow">¶</a></p>
+<div class="alignLeft art-http-message art-text artwork" id="section-4.2-9">
+<pre>
+HTTP/1.1 200 OK
+Content-Type: text/csv
+Content-Location: /contacts/responses/43
+
+surname, givenname, email
+Jones, Sally, sally.jones@example.com
+Dubois, Camille, camille.dubois@example.net
+</pre><a href="#section-4.2-9" class="pilcrow">¶</a>
+</div>
+</section>
+<section id="section-4.3">
+        <h3 id="name-simple-query-with-indirect-">
+<a href="#section-4.3" class="section-number selfRef">4.3. </a><a href="#name-simple-query-with-indirect-" class="section-name selfRef">Simple QUERY with indirect response (303 See Other)</a>
+        </h3>
+<p id="section-4.3-1">A simple query with an Indirect Response (303 See Other):<a href="#section-4.3-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-http-message art-text artwork" id="section-4.3-2">
+<pre>
+QUERY /contacts HTTP/1.1
+Host: example.org
+Content-Type: example/query
+Accept: text/csv
+
+select surname, givenname, email limit 10
+</pre><a href="#section-4.3-2" class="pilcrow">¶</a>
+</div>
+<p id="section-4.3-3">Response:<a href="#section-4.3-3" class="pilcrow">¶</a></p>
+<div class="alignLeft art-http-message art-text artwork" id="section-4.3-4">
+<pre>
+HTTP/1.1 303 See Other
+Location: http://example.org/contacts/query123
+</pre><a href="#section-4.3-4" class="pilcrow">¶</a>
+</div>
+<p id="section-4.3-5">Fetch Query Response:<a href="#section-4.3-5" class="pilcrow">¶</a></p>
+<div class="alignLeft art-http-message art-text artwork" id="section-4.3-6">
 <pre>
 GET /contacts/query123 HTTP/1.1
 Host: example.org
-</pre><a href="#section-4.2-6" class="pilcrow">¶</a>
+</pre><a href="#section-4.3-6" class="pilcrow">¶</a>
 </div>
-<p id="section-4.2-7">Response:<a href="#section-4.2-7" class="pilcrow">¶</a></p>
-<div class="alignLeft art-http-message art-text artwork" id="section-4.2-8">
+<p id="section-4.3-7">Response:<a href="#section-4.3-7" class="pilcrow">¶</a></p>
+<div class="alignLeft art-http-message art-text artwork" id="section-4.3-8">
 <pre>
 HTTP/1.1 200 OK
 Content-Type: text/csv
@@ -1444,7 +1518,7 @@ surname, givenname, email
 Smith, John, john.smith@example.org
 Jones, Sally, sally.jones@example.com
 Dubois, Camille, camille.dubois@example.net
-</pre><a href="#section-4.2-8" class="pilcrow">¶</a>
+</pre><a href="#section-4.3-8" class="pilcrow">¶</a>
 </div>
 </section>
 </section>
@@ -1457,6 +1531,13 @@ Dubois, Camille, camille.dubois@example.net
       The QUERY method is subject to the same general security
       considerations as all HTTP methods as described in
       <span>[<a href="#HTTP" class="cite xref">HTTP</a>]</span>.<a href="#section-5-1" class="pilcrow">¶</a></p>
+<p id="section-5-2">
+      The QUERY method can be used as an alternative to passing query
+      information in the query portion of a URI. This is preferred in some
+      cases, as the URI is more likely to be logged than the request content. If
+      a server creates a temporary resource to represent the results of a QUERY
+      request (e.g., for use in the Location or Content-Location field), the URI of this
+      resource <span class="bcp14">SHOULD NOT</span> expose the original request content in plaintext.<a href="#section-5-2" class="pilcrow">¶</a></p>
 </section>
 <section id="section-6">
       <h2 id="name-iana-considerations">
@@ -1585,7 +1666,9 @@ Dubois, Camille, camille.dubois@example.net
 <a href="#appendix-A.5" class="section-number selfRef">A.5. </a><a href="#name-since-draft-ietf-httpbis-safe-m" class="section-name selfRef">Since draft-ietf-httpbis-safe-method-w-body-04</a>
         </h3>
 <ul class="normal">
-<li class="normal" id="appendix-A.5-1.1">Added Mike Bishop as author (<span><a href="https://github.com/httpwg/http-extensions/issues/2837">https://github.com/httpwg/http-extensions/issues/2837</a></span>)<a href="#appendix-A.5-1.1" class="pilcrow">¶</a>
+<li class="normal" id="appendix-A.5-1.1">Describe role of Content-Location and Location fields (<span><a href="https://github.com/httpwg/http-extensions/issues/1745">https://github.com/httpwg/http-extensions/issues/1745</a></span>)<a href="#appendix-A.5-1.1" class="pilcrow">¶</a>
+</li>
+          <li class="normal" id="appendix-A.5-1.2">Added Mike Bishop as author (<span><a href="https://github.com/httpwg/http-extensions/issues/2837">https://github.com/httpwg/http-extensions/issues/2837</a></span>)<a href="#appendix-A.5-1.2" class="pilcrow">¶</a>
 </li>
         </ul>
 </section>
